@@ -1,19 +1,28 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
 
-/*
 import React from 'react';
 import ReactDOM from 'react-dom';
+import './index.css';
+import App from './App';
+
+ReactDOM.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+  document.getElementById('root')
+);
+
+
+/*
 import App from './App';
 //import { AuthContextProvider } from './auth';
 import reportWebVitals from './reportWebVitals';
 */
+
 /*
   This is the entry-point for our application. Notice that we
   inject our store into all the components in our application.
-  
-  @author McKilla Gorilla
 */
+
 /*import { GlobalStoreContext, useGlobalStore } from './store'
 const AppWrapper = () => {
   const store = useGlobalStore();
@@ -23,6 +32,7 @@ const AppWrapper = () => {
     </GlobalStoreContext.Provider>
   )
 }*/
+
 /*
 ReactDOM.render(
     <React.StrictMode>  
