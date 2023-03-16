@@ -19,7 +19,6 @@ app.use('/api/APPs', appRoutes);
 app.use('/api/Views', tableRoutes);
 
 
-
 // Create MySQL connection 未完成
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
