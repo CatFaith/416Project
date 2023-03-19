@@ -4,7 +4,10 @@ import { React } from 'react'
 import { BrowserRouter, Route, Switch } from 'react-router-dom'
 import {
     Drive,
-    Toolbar
+    Toolbar,
+    detailView,
+    EditPanel,
+    tableView
 } from './components'
 
 /*
