@@ -3,14 +3,14 @@ import './index.css';
 import { React } from 'react'
 import { BrowserRouter, Route, Switch } from 'react-router-dom'
 import {
-    Home,
-    detailView, 
     Drive,
+    Toolbar,
+    detailView,
     EditPanel,
-    Toolbar
+    tableView
 } from './components'
 
-
+/*
 const App = () => {
     return (
         <BrowserRouter>
@@ -18,10 +18,10 @@ const App = () => {
                 <GlobalStoreContextProvider>              
                     <AppBanner />
                     <Switch>
-                        <Route path="/" exact component={Home} />
-                        <Route path="/dev/" exact component={DeveloperView} />
-                        <Route path="/role/" exact component={RoleMembershipSheet} />
-                        <Route path="/user/" exact component={UserView}/>
+                        <Route path="/" exact component={HomeWrapper} />
+                        <Route path="/register/" exact component={RegisterScreen} />
+                        <Route path="/top5list/:id" exact component={WorkspaceScreen} />
+                        <Route path="/signin/" exact component={SignInSide}/>
                     </Switch>
                     <Statusbar />
                 </GlobalStoreContextProvider>
@@ -31,3 +31,4 @@ const App = () => {
 }
 
 export default App
+*/
