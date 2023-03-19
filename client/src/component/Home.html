@@ -10,11 +10,11 @@
 <body>
     <div class="container">
         <!-- 顶层工具栏 -->
-        <header>
-            <h1>Sheet2App</h1>
-            <p>User</p>
+        <div class="top_tool_bar">
+            <h1 class="web_logo">Sheet2App</h1>
+            <p class="user_mark">User</p>
             <p>Extention</p>
-        </header>
+        </div>
 
         <!-- 侧向工具栏 -->
         <nav>
@@ -25,12 +25,12 @@
 
         <!-- 工作区 -->
         <div class="work_space">
-            <!-- 基础排列选项 -->
-            <header class = "work_space_header">
-                <p>Recent</p>
-                <p>Apps</p>
-                <p>Database</p>
-            </header>
+            <!-- 基础访问条 -->
+            <div class="work_option_bar">
+                <p>&nbsp Recent &nbsp</p>
+                <p>&nbsp Apps &nbsp</p>
+                <p>&nbsp Database &nbsp</p>
+            </div>
 
             <!-- 按访问时间排列 -->
             <div class = "Recent">
@@ -43,10 +43,21 @@
             </div>
 
             <!-- 默认排列 -->
-            <div class = "Apps"></div>
+            <div class = "Apps">
+                <section>
+                    <li>Sample_1</li>
+                    <li>Sample_2</li>
+                    <li>Sample_3</li>
+                </section>
+            </div>
 
             <!-- 数据库 -->
-            <div class = "Database"></div>
+            <div class = "Database">
+                <section>
+                    <li>Sample_1</li>
+                    <li>Sample_2</li>
+                </section>
+            </div>
         </div>
     </div>
 </body>
