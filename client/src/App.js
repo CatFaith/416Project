@@ -13,7 +13,7 @@ import {
   TableView,
   ToolBar,
   WelcomeScreen
-} from './components'
+} from './component'
 import './App.css';
 
 const App = () => {
