@@ -1,1 +1,3 @@
-export default function detailView() {}
+import { useContext, useState } from 'react'
+
+export default function DetailView() {}
