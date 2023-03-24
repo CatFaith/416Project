@@ -4,7 +4,7 @@ import DevView from "./DevView"
 import Drive from "./Drive"
 import EditPanel from "./EditPanel"
 import Home from "./Home"
-import TableView from "./tableView";
+import TableView from "./TableView";
 import ToolBar from "./ToolBar"
 import WelcomeScreen from "./WelcomeScreen";
 
