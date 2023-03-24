@@ -1,1 +1,1 @@
-export default function Toolbar() {}
+export default function ToolBar() {}

@@ -1,1 +1,1 @@
-export default function tableView() {}
+export default function TableView() {}
