@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "Er1cShi",
+    "password": "30683241SYn!",
+    "database": "sheet2app",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "Er1cShi",
+    "password": "30683241SYn!",
+    "database": "sheet2app",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "Er1cShi",
+    "password": "30683241SYn!",
+    "database": "sheet2app",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  }
+}
