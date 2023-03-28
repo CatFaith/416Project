@@ -18,7 +18,9 @@ module.exports = (sequelize, DataTypes) => {
     roleMemberSheet: DataTypes.STRING,
     savedDataUrl: DataTypes.STRING,
     endUserIds: DataTypes.STRING,
-    published: DataTypes.STRING
+    published: DataTypes.STRING,
+    developer: DataTypes.STRING,
+    appName: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'App',

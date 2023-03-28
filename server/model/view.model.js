@@ -16,10 +16,15 @@ module.exports = (sequelize, DataTypes) => {
   View.init({
     appId: DataTypes.INTEGER,
     viewName: DataTypes.STRING,
-    savedDataUrl: DataTypes.STRING
+    savedDataUrl: DataTypes.STRING,
+    columns: DataTypes.INTEGER,
+    viewType: DataTypes.STRING,
+    allowedActions: DataTypes.STRING,
+    roles: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'View',
   });
   return View;
 };
+

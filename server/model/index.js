@@ -11,7 +11,7 @@ const config = require(__dirname + '/../config/config.json')[env];
 const db = {};
 db.Op = Op; //operator
 
-// Create a Sequelize instance and use it to initialize the database model
+// Create a Sequelize instance and use it to initialize the database models
 
 let sequelize;
 if (config.use_env_variable) {

@@ -7,22 +7,35 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       userId: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        comment:'User id'
       },
       roleMemberSheet: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        comment:'Google Authorization url'
       },
       savedDataUrl: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        comment:'Google Data url'
       },
       published: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        comment:'Publish or not'
+      },
+      developer: {
+        type: Sequelize.STRING,
+        comment:'Developer'
       },
       endUserIds: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        comment:'End user id'
+      },
+      appName: {
+        type: Sequelize.STRING,
+        comment:'App Name'
       },
       createdAt: {
         allowNull: false,

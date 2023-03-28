@@ -15,7 +15,8 @@ module.exports = (sequelize, DataTypes) => {
   }
   User.init({
     userName: DataTypes.STRING,
-    googleAccount: DataTypes.STRING
+    googleAccount: DataTypes.STRING,
+    googleToken: DataTypes.STRING,
   }, {
     sequelize,
     modelName: 'User',

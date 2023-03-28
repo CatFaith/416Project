@@ -10,13 +10,32 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       appId: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        comment:'App id'
       },
       viewName: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        comment:'View name'
       },
       savedDataUrl: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        comment:'Google Data url'
+      },
+      columns: {
+        type: Sequelize.INTEGER,
+        comment:''
+      },
+      viewType: {
+        type: Sequelize.STRING,
+        comment:''
+      },
+      allowedActions: {
+        type: Sequelize.STRING,
+        comment:''
+      },
+      roles: {
+        type: Sequelize.STRING,
+        comment:''
       },
       createdAt: {
         allowNull: false,

@@ -7,13 +7,19 @@ module.exports = {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       userName: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        comment:'User name'
       },
       googleAccount: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING,
+        comment:'Google email'
+      },
+      googleToken: {
+        type: Sequelize.STRING,
+        comment:'Google token'
       },
       createdAt: {
         allowNull: false,
