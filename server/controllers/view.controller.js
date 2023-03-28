@@ -24,6 +24,10 @@ exports.addView = async (req, res) => {
             appId: view.appId,
             viewName: view.viewName,
             savedDataUrl: view.savedDataUrl,
+            columns: view.columns,
+            viewType: view.viewType,
+            allowedActions: view.allowedActions,
+            roles: view.roles,
         };
         await View.create(newView).then(data => {
             res.json(sendResultResponse(data, 200, process.env["SYSTEM_SUCCESS"]))
@@ -90,6 +94,10 @@ exports.editView = async (req, res) => {
             appId: view.appId,
             viewName: view.viewName,
             savedDataUrl: view.savedDataUrl,
+            columns: view.columns,
+            viewType: view.viewType,
+            allowedActions: view.allowedActions,
+            roles: view.roles
         };
         await View.update(newView, {where: {id: view.id}}).then(data => {
             res.json(sendResultResponse(data.length, 200, process.env["SYSTEM_SUCCESS"]))
