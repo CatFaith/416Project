@@ -1,4 +1,4 @@
 node_modules
 pnpm-lock.yaml
 public
-.env
+package-lock.json
