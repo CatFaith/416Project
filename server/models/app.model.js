@@ -20,6 +20,7 @@ module.exports = (sequelize, DataTypes) => {
     endUserIds: DataTypes.STRING,
     published: DataTypes.STRING,
     developer: DataTypes.STRING,
+    googleAccount: DataTypes.STRING,
     appName: DataTypes.STRING
   }, {
     sequelize,

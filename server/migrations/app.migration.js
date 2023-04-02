@@ -37,6 +37,10 @@ module.exports = {
         type: Sequelize.STRING,
         comment:'App Name'
       },
+      googleAccount: {
+        type: Sequelize.STRING,
+        comment:'Google email'
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
