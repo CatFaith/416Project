@@ -1,30 +1,38 @@
-import './index.css';
-import { React } from 'react'
-import { BrowserRouter, Route, Switch } from 'react-router-dom'
-import { AuthContextProvider } from './auth';
-import { GlobalStoreContextProvider } from './store'
-import {
-  AppBanner,
-  DetailView,
-  DevView,
-  Drive,
-  EditPanel,
-  Home,
-  TableView,
-  ToolBar,
-  WelcomeScreen
-} from './component'
-import './App.css';
+/**
+ * 入口页面文件，路由
+ */
 
-const App = () => {
-  return (
-      <BrowserRouter>
-          <AppBanner />
-          <Switch>
-            <Route path="/" exact component={WelcomeScreen} />
-          </Switch>
-      </BrowserRouter>
-  )
+import {unstable_HistoryRouter as HistoryRouter, Routes, Route} from 'react-router-dom'
+import {lazy,Suspense} from "react";
+import { history } from '@/utils'
+import './app.scss'
+
+const Layout = lazy(() => import('@/pages/Layout'))
+const Login = lazy(() => import('@/pages/Login'))
+const Home = lazy(() => import('@/pages/Home'))
+const Apps = lazy(() => import('@/pages/Apps'))
+const Views = lazy(() => import('@/pages/Views'))
+const AppDetail = lazy(() => import('@/pages/AppDetail'))
+
+function App() {
+    return (
+        <HistoryRouter history={history}>
+            <div className="app">
+                <Suspense fallback={<div style={{textAlign: 'center', marginTop: 200}}>loading...</div>}>
+                    <Routes>
+                        <Route path='/' element={<Layout/>}>
+                            <Route index element={<Home />} />
+                            <Route path='/apps' element={<Apps/>}></Route>
+                            <Route path='/appDetail' element={<AppDetail/>}></Route>
+                            <Route path='/views' element={<Views/>}></Route>
+                        </Route>
+                        <Route path='/login' element={<Login/>}></Route>
+                    </Routes>
+                </Suspense>
+            </div>
+        </HistoryRouter>
+
+    );
 }
 
 export default App;

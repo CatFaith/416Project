@@ -16,9 +16,11 @@ const {sendResultResponse} = require("../utils/responseFrom")
  */
 exports.login = async (req, res) => {
     const user = req.body;
+    console.log(req)
     const newUser = {
         userName: user.userName,
         googleAccount: user.googleAccount,
+        googleToken: user.googleToken
     };
     await User.findOne({where: {googleAccount: user.googleAccount}}).then(data => {
         if (data) {

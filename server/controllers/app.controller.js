@@ -22,7 +22,9 @@ exports.createApp = async (req, res) => {
         userId: user.id,
         roleMemberSheet: app.roleMemberSheet,
         savedDataUrl: app.savedDataUrl,
-        published: app.published
+        published: app.published,
+        developer: app.developer,
+        appName: app.appName
     };
     await App.create(newApp).then(data => {
         res.json(sendResultResponse(data, 200, process.env["SYSTEM_SUCCESS"]))
@@ -107,13 +109,16 @@ exports.getAppByPk = async (data) => {
  */
 exports.editApp = async (req, res) => {
     const app = req.body;
+    console.log(app)
     // req.user.id is obtained by the calling interface after the token in the request header is resolved. 
     // It matches whether the current login user is the same as the user in the incoming token
     if (app.userId == req.user.id) {
         const newApp = {
             roleMemberSheet: app.roleMemberSheet,
             savedDataUrl: app.savedDataUrl,
-            published: app.published
+            published: app.published,
+            developer: app.developer,
+            appName: app.appName
         };
         await App.update(newApp, {where: {id: app.id}}).then(data => {
             res.json(sendResultResponse(data.length, 200, process.env["SYSTEM_SUCCESS"]))
