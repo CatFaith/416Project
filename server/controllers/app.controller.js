@@ -20,6 +20,7 @@ exports.createApp = async (req, res) => {
     const app = req.body;
     const newApp = {
         userId: user.id,
+        googleAccount: user.googleAccount,
         roleMemberSheet: app.roleMemberSheet,
         savedDataUrl: app.savedDataUrl,
         published: app.published,
