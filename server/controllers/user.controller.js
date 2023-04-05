@@ -1,5 +1,6 @@
 const db = require("../models");
 const User = db.user;
+const Op = db.Op;
 const {getToken} = require("../utils/token")
 const {sendResultResponse} = require("../utils/responseFrom")
 
@@ -24,6 +25,7 @@ exports.login = async (req, res) => {
     };
     await User.findOne({where: {googleAccount: user.googleAccount}}).then(data => {
         if (data) {
+            //如果查询出来的数据不为空，代表此用户之前已经登录过系统，则无需再新增数据到user表，只需正常的返回用户信息和token即可
             res.json(sendResultResponse({data, token: getToken(data)}, 200, process.env["SYSTEM_SUCCESS"]))
         } else {
             // If it detects that the current Gmail user has not logged in to the system, the user creates a new record
@@ -44,6 +46,7 @@ exports.login = async (req, res) => {
  */
 exports.deleteUser = async (req, res) => {
     const user = req.body
+    //根据主键Id进行删除，确保删除数据的唯一性
     await User.destroy({where: {id: user.id}}).then(data => {
         res.json(sendResultResponse(data, 200, process.env["SYSTEM_SUCCESS"]))
     }).catch(err => {
@@ -65,6 +68,7 @@ exports.editUser = async (req, res) => {
             userName: user.userName,
             googleAccount: user.googleAccount,
         };
+        //根据主键Id进行更新，确保更新数据的唯一性
         await User.update(newUser, {where: {id: user.id}}).then(data => {
             res.json(sendResultResponse(data.length, 200, process.env["SYSTEM_SUCCESS"]))
         }).catch(err => {
@@ -102,7 +106,11 @@ exports.getUser = async (req, res) => {
  * @returns List of user information objects
  */
 exports.getUserList = async (req, res) => {
-    await User.findAll().then(data => {
+    //查询可以分享的用户，但是要排除自己，所以此处排除自己的id
+    let where = {
+        id: {[Op.ne]:req.user.id} // not equal Sequelize
+    };
+    await User.findAll({where}).then(data => {
         res.json(sendResultResponse(data, 200, process.env["SYSTEM_SUCCESS"]))
     }).catch(err => {
         res.json(sendResultResponse(err, 500, process.env["SYSTEM_FAIL"]))
@@ -110,16 +118,17 @@ exports.getUserList = async (req, res) => {
 };
 
 /**
- * Gets whether the user exists based on the user primary key
+ * 通过谷歌账户获取用户信息
  * @param req
  * @param res
- * @returns Return true/false
+ * @returns Return user.dataValues/null
  */
-exports.getUserByPk = async (data) => {
-    const user = await User.findByPk(data)
+exports.getUserByGoogleAccount = async (googleAccount) => {
+    //传入的账户是谷歌账户，根据谷歌账户查询用户的信息
+    const user = await User.findOne({where: {googleAccount: googleAccount}})
     if (user != null) {
-        return true
+        return user.dataValues
     } else {
-        return false
+        return null
     }
 };

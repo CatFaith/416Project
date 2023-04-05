@@ -19,6 +19,7 @@ exports.addView = async (req, res) => {
     const userId = await getAppByPk(view)
     // req.user.id is obtained by the calling interface after the token in the request header is resolved. 
     // If the id of the current login user is the same as that of the user in the token, the database can be operated only if the ID is the same
+    // 前端新增View传过来的参数，保存View表
     if (userId == req.user.id) {
         const newView = {
             appId: view.appId,
@@ -51,6 +52,7 @@ exports.deleteView = async (req, res) => {
     // req.user.id is obtained by the calling interface after the token in the request header is resolved. 
     // It matches whether the current login user is the same as the user in the incoming token
     if (userId == req.user.id) {
+        //根据主键Id进行删除，确保删除数据的唯一性
         await View.destroy({where: {id: view.id}}).then(data => {
             res.json(sendResultResponse(data, 200, process.env["SYSTEM_SUCCESS"]))
         }).catch(err => {
@@ -70,6 +72,7 @@ exports.deleteView = async (req, res) => {
  */
 exports.getView = async (req, res) => {
     const view = req.body;
+    //APP点击查看view，需要根据appid查询当前APP下所有关联的view
     await View.findAll({where: {appId: view.appId}}).then(data => {
         res.json(sendResultResponse(data, 200, process.env["SYSTEM_SUCCESS"]))
     }).catch(err => {
@@ -99,6 +102,7 @@ exports.editView = async (req, res) => {
             allowedActions: view.allowedActions,
             roles: view.roles
         };
+        //根据主键Id进行更新，确保更新数据的唯一性
         await View.update(newView, {where: {id: view.id}}).then(data => {
             res.json(sendResultResponse(data.length, 200, process.env["SYSTEM_SUCCESS"]))
         }).catch(err => {

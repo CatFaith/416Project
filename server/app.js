@@ -4,7 +4,7 @@ const logger = require('morgan');
 //Access the.env file
 const dotenv = require('dotenv')
 dotenv.config()
-// Route loading
+// Route auto loading, but not used actually. We manually required in each files.
 const mount = require('mount-routes')
 //token resolution
 const  expressJWT  = require('express-jwt')
@@ -20,7 +20,7 @@ const googleRouter = require('./routes/api/google');
 const app = express();
 
 app.use(logger('dev'));
-app.use(express.json());
+app.use(express.json()); // 用json传file 
 app.use(express.urlencoded({ extended: false }));
 // app.use(express.static(path.join(__dirname, 'public')));
 
