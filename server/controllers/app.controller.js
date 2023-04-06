@@ -77,8 +77,7 @@ exports.getApp = async (req, res) => {
         where = {
             // [Op.or] 表示使用 Sequelize 的操作符 OR 进行条件查询，它用于组合多个条件，只要其中一个条件成立，就返回查询结果。
             [Op.or]: [{userId: user.id} // 分别是用户自己创建的应用和其他用户分享的应用，查询条件中的Op.like操作符可以进行模糊查询，通过将指定的用户ID用通配符%拼接到查询条件中，可以返回包含该用户ID的记录。
-                     ,{endUserIds: {[Op.like]: '%' + user.id + '%'}, published: 'true'}
-                    ],
+                     ,{endUserIds: {[Op.like]: '%' + user.id + '%'}, published: 'true'}],
         }; // The like operator is used to blur match strings in a query. We used the % wildcard to match any character, so the query returns a record containing the endUserIds value for the specified user ID.
         await App.findAll({where}).then(data => {
             res.json(sendResultResponse(data, 200, process.env["SYSTEM_SUCCESS"]))

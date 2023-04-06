@@ -1,3 +1,4 @@
+// Auto generated
 const express = require('express');
 const path = require('path');
 const logger = require('morgan');
@@ -6,10 +7,13 @@ const dotenv = require('dotenv')
 dotenv.config()
 // Route auto loading, but not used actually. We manually required in each files.
 const mount = require('mount-routes')
+
+
 //token resolution
 const  expressJWT  = require('express-jwt')
 
 const {sendResultResponse} = require("./utils/responseFrom")
+
 //Import routing file
 const loginRouter = require('./routes/api/login');
 const appRouter = require('./routes/api/app');
@@ -19,13 +23,16 @@ const googleRouter = require('./routes/api/google');
 
 const app = express();
 
+
+// Auto generated
 app.use(logger('dev'));
 app.use(express.json()); // 用json传file 
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false })); // Express 框架会自动对请求体进行解析，并将解析出来的数据放到 req.body 中，以便我们在请求处理函数中使用。
 // app.use(express.static(path.join(__dirname, 'public')));
 
 // The path usage can be printed and the path represented by table true shows the routing table on the printer table
 // mount(app, path.join(process.cwd(), '/routes'), true)
+
 
 //Check token
 app.use(expressJWT({ secret: process.env["SIGN_KEY"],algorithms: ['HS256'],credentialsRequired: true }).unless({path: ["/login"]}));
@@ -45,7 +52,7 @@ app.use('/view', viewRouter);
 app.use('/google', googleRouter);
 
 
-
+// Auto generated
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
