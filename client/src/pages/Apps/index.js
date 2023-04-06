@@ -1,78 +1,87 @@
-import {Layout, Button, Menu, Card, Col, Row} from 'antd';
+import {Layout, Button, Menu, Card, Col, Row, Radio, message} from 'antd';
 import React from 'react';
+import {observer} from 'mobx-react-lite'
 import {FieldTimeOutlined, ShareAltOutlined, PlusOutlined} from '@ant-design/icons'
 import './index.scss'
-import app1 from '@/assets/app1.jpg'
+import AppDialog from "@/components/app/AppDialog";
+import AddCard from "@/components/app/AppCard";
 
-function Apps() {
-    const {Sider, Content} = Layout;
-    const {Meta} = Card;
-    const arr =[{
-        appName:"app1",
-        author:"admin@gmail.com",
-        src:app1
-    },{
-        appName:"app2",
-        author:"admin@gmail.com",
-        src:app1
-    },{
-        appName:"app3",
-        author:"admin@gmail.com",
-        src:app1
-    },{
-        appName:"app4",
-        author:"admin@gmail.com",
-        src:app1
-    },{
-        appName:"app5",
-        author:"admin@gmail.com",
-        src:app1
-    }]
-    
+import {useStore} from '@/stores'
+import {useEffect, useState} from 'react'
+import {useNavigate} from "react-router-dom";
+
+const {Sider, Content} = Layout;
+
+const Apps = () => {
+    //定义state参数
+    const [showAppDialog, setShowAppDialog] = useState(false)
+    const [showElem, setShowElem] = useState(true)
+    const [showAppType, setShowAppType] = useState("recent")
+    const {appStore, userStore} = useStore()
+    //调用app list方法
+    useEffect(() => {
+        appStore.getApps().then()
+    }, appStore)
+
+    const closeAddDialog = () => {
+        setShowAppDialog(false)
+    }
+
     return (
         <div className="Apps" style={{height: '100%'}}>
             <Layout>
                 <Sider style={{background: "#f5f5f5", height: '100%'}}>
-
                     <Menu
                         mode="inline"
                         style={{height: '100%', background: "#f5f5f5"}}
                     >
                         <Button type="dashed" shape="round" icon={<PlusOutlined/>} size="large"
-                                style={{marginLeft: "15px", marginTop: "10px"}}>
+                                style={{marginLeft: 20, marginTop: 35}}
+                                onClick={() => {
+                                    setShowAppDialog(true)
+                                }}>
                             Create
                         </Button>
-                        <Menu.Item icon={<FieldTimeOutlined/>}>
+                        <Menu.Item icon={<FieldTimeOutlined/>} onClick={() => {
+                            setShowAppType("recent")
+                        }}>
                             Recent
                         </Menu.Item>
-                        <Menu.Item icon={<ShareAltOutlined/>}>
+                        <Menu.Item icon={<ShareAltOutlined/>} onClick={() => {
+                            setShowAppType("share")
+                        }}>
                             Share
                         </Menu.Item>
                     </Menu>
                 </Sider>
                 <Content style={{margin: 30}}>
+                    <Radio.Group size="large" defaultValue="apps" style={{marginBottom: 30}}>
+                        <Radio.Button value="apps" onClick={() => setShowElem(true)}>Apps</Radio.Button>
+                        <Radio.Button value="database" onClick={() => setShowElem(false)}>Database</Radio.Button>
+                    </Radio.Group>{showElem ?
                     <Row>
-                        {arr.map(item=>{
-                          return  <Col span={6} style={{marginBottom: 30}}>
-                                <Card
-                                    hoverable
-                                    style={{width: "90%"}}
-                                    cover={<img alt="example" src={item.src}/>}>
-                                    <Meta title={item.appName} description={item.author}/>
-                                </Card>
-                            </Col>
-
-                        })}
-
-
-
-                    </Row>
-
+                        {/*//当app list有数据的时候遍历生成AddCard组件*/}
+                        {appStore.apps? appStore.apps.map(item => {
+                            if (showAppType == "recent" && item.userId == userStore.id) {
+                                return <Col span={6} style={{marginBottom: 30}}><AddCard item={item}></AddCard> </Col>
+                            }
+                            if (showAppType == "share" && item.userId != userStore.id) {
+                                return <Col span={6} style={{marginBottom: 30}}><AddCard item={item}></AddCard> </Col>
+                            }
+                        }) : null}
+                    </Row> : ''
+                }
                 </Content>
             </Layout>
+            //调用弹出框组件
+            <AppDialog
+                operationType="create"
+                visible={showAppDialog}
+                close={closeAddDialog}
+            ></AppDialog>
         </div>
     );
 }
 
-export default Apps;
+export default observer(Apps);
 
