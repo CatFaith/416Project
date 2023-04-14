@@ -7,7 +7,7 @@ const { GoogleSpreadsheet } = require('google-spreadsheet');
 async function getGoogleSheetAuthorization(url) {
     //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
     const result = [];
-    const sheet = getSheet(url);
+    const sheet = await getSheet(url);
     const rows = await sheet.getRows();
     for (row of rows) {
         result.push(row._rawData);
@@ -23,7 +23,7 @@ async function getGoogleSheetAuthorization(url) {
 async function getSheet(url) {
     const arr = url.split('d/')[1];
     const sheetId = arr.split('=')[1];
-    const doc = getGoogleSheetDoc(url)
+    const doc = await getGoogleSheetDoc(url)
     const sheet = doc.sheetsById[sheetId];
     return sheet;
 };
@@ -35,13 +35,13 @@ async function getSheet(url) {
  */
 async function getGoogleSheetsData(urlArr) {
     //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
+    const result = [];
     for (const url of urlArr){
-        const result = [];
-        const sheet = getSheet(url);
+        const sheet = await getSheet(url);
         //sheet页名称
         const title = sheet._rawProperties.title;
         //列名称
-        const headerValues = sheet.headerValues;
+        // const headerValues = sheet.headerValues;
         //初始值
         let initialValue = []
         //label
@@ -51,6 +51,8 @@ async function getGoogleSheetsData(urlArr) {
         //类型
         let type = []
         const rows = await sheet.getRows();
+        //列名称
+        const headerValues = rows[0]._sheet.headerValues;
         const rowData = []
         let i = 0;
         //第一行为name，第二行为initialValue，第三行为label，第四行为reference,第五行是类型。数据时从第六行开始
@@ -113,7 +115,7 @@ async function getGoogleSheetDoc(url) {
  */
 async function getGoogleSheetIds(url) {
     //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
-    const doc = getGoogleSheetDoc(url)
+    const doc = await getGoogleSheetDoc(url)
     const rawSheets = doc._rawSheets
     const sheetIds = []
     for(const key in rawSheets){
@@ -128,10 +130,10 @@ async function getGoogleSheetIds(url) {
  * @param headerValues: { headerValues: ['name', 'email'] }
  * @returns {Promise<*>}
  */
-async function addGoogleSheetSheet(url, headerValues) {
+async function addViewSheet(url, sheetName) {
     //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
-    const doc = getGoogleSheetDoc(url)
-    const sheet = await doc.addSheet(headerValues);
+    const doc = await getGoogleSheetDoc(url)
+    const sheet = await doc.addSheet({title: sheetName});
     return sheet;
 };
 
@@ -146,7 +148,7 @@ async function addGoogleSheetSheet(url, headerValues) {
  */
 async function addSheetData(url, data) {
     //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
-    const sheet = getSheet(url);
+    const sheet = await getSheet(url);
     // append rows
     const rows = await sheet.addRows(data);
     return rows;
@@ -161,11 +163,11 @@ async function addSheetData(url, data) {
  */
 async function editSheetData(url, rowNum, data) {
     //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
-    const sheet = getSheet(url);
+    const sheet = await getSheet(url);
     // get rows
     const rows = await sheet.getRows();
     // edit rows
-    rows[rowNum] = data;
+    rows[rowNum]._rawData = data;
     // save updates
     await rows[rowNum].save();
     return rows;
@@ -179,7 +181,7 @@ async function editSheetData(url, rowNum, data) {
  */
 async function deleteSheetData(url, rowNum) {
     //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
-    const sheet = getSheet(url);
+    const sheet = await getSheet(url);
     // get rows
     const rows = await sheet.getRows();
     // save updates
@@ -188,13 +190,12 @@ async function deleteSheetData(url, rowNum) {
 };
 
 
-
 module.exports = {
     getGoogleSheetsData,
     getGoogleSheetAuthorization,
     getGoogleSheetDoc,
     getGoogleSheetIds,
-    addGoogleSheetSheet,
+    addViewSheet,
     addSheetData,
     editSheetData,
     deleteSheetData
