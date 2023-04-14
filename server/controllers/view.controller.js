@@ -2,6 +2,7 @@ const db = require("../models");
 const View = db.view;
 const {getAppByPk} = require("./app.controller");
 const {sendResultResponse} = require("../utils/responseFrom")
+const {getGoogleSheetAuthorization} = require("../utils/googleSheet");
 
 /**
  * req.user.id is obtained by the calling interface after the token in the request header is resolved. 
@@ -77,6 +78,20 @@ exports.getView = async (req, res) => {
     }).catch(err => {
         res.json(sendResultResponse(err, 500, process.env["SYSTEM_FAIL"]))
     })
+};
+
+/**
+ * 从app列表点击app时候，根据view的saveDataURL字段获取google sheet的数据
+ * @param req
+ * @param res
+ * @returns google sheet data
+ */
+exports.getViewForGoogleSheet = async (req, res) => {
+    const view = req.body;
+    //1，根据view的saveDataURL字段获取google sheet的数据
+    const result = getGoogleSheetAuthorization(view.savedDataUrl)
+    //2，展示数据
+    res.json(sendResultResponse(result, 200, process.env["SYSTEM_SUCCESS"]))
 };
 
 /**
