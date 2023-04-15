@@ -8,7 +8,6 @@ import AddCard from "@/components/app/AppCard";
 
 import {useStore} from '@/stores'
 import {useEffect, useState} from 'react'
-import {useNavigate} from "react-router-dom";
 
 const {Sider, Content} = Layout;
 
@@ -73,7 +72,7 @@ const Apps = () => {
                 }
                 </Content>
             </Layout>
-            //调用弹出框组件
+            {/*//调用弹出框组件*/}
             <AppDialog
                 operationType="create"
                 visible={showAppDialog}

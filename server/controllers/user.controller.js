@@ -17,7 +17,6 @@ const {sendResultResponse} = require("../utils/responseFrom")
  */
 exports.login = async (req, res) => {
     const user = req.body;
-    console.log(req)
     const newUser = {
         userName: user.userName,
         googleAccount: user.googleAccount,
@@ -108,7 +107,7 @@ exports.getUser = async (req, res) => {
 exports.getUserList = async (req, res) => {
     //查询可以分享的用户，但是要排除自己，所以此处排除自己的id
     let where = {
-        id: {[Op.ne]:req.user.id} // not equal Sequelize
+        id: {[Op.ne]:req.user.id}
     };
     await User.findAll({where}).then(data => {
         res.json(sendResultResponse(data, 200, process.env["SYSTEM_SUCCESS"]))

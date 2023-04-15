@@ -563,7 +563,7 @@ POST http://xxx:3000/app/shareApp
 ```json
 {
   "appId": 27,
-  "endUserId": 3
+  "googleAccount": "['Eric@gmail.com','admin1@gmail.com','miao@gmail.com']"
 }
 ```
 
@@ -573,7 +573,7 @@ POST http://xxx:3000/app/shareApp
 |---|---|---|---|---|
 |Authorization|header|string| Yes |token|
 |appId|body|int| Yes |appId|
-|endUserId|body|int| Yes |End user id|
+|googleAccount|body|Array| Yes |Google Account|
 
 > Return example
 
@@ -711,8 +711,8 @@ POST http://xxx:3000/view/editView
 |Authorization|header|string| Yes |token|
 |id|body|int| Yes |viewId|
 |appId|body|int| Yes |appId|
-|viewName|body|int| Yes |view Name|
-|savedDataUrl|body|int| Yes |Google Data url|
+|viewName|body|int| Yes |view名称|
+|savedDataUrl|body|int| Yes |Google数据表url|
 |columns|body|int| Yes |columns|
 |viewType|body|string| Yes |view type|
 |allowedActions|body|string| Yes |allowed actions|
@@ -824,7 +824,7 @@ POST http://xxx:3000/view/getView
       "viewName": "View name",
       "savedDataUrl": "https://docs.google.com/spreadsheets/d/1ZLjzkVykrdcMZfi6sqQ59ktmHrhC3H2Jqt7ur90lOTY/edit#gid=1",
       "columns": 5,
-      "viewType": "",
+      "viewType": "7",
       "allowedActions": "edit",
       "roles": "endUser",
       "createdAt": "2023-03-18T05:17:33.000Z",
@@ -835,7 +835,7 @@ POST http://xxx:3000/view/getView
       "appId": 27,
       "viewName": "view name2",
       "columns": 5,
-      "viewType": "",
+      "viewType": "7",
       "allowedActions": "edit",
       "roles": "endUser",
       "savedDataUrl": "https://docs.google.com/spreadsheets/d/1ZLjzkVykrdcMZfi6sqQ59ktmHrhC3H2Jqt7ur90lOTY/edit#gid=1",

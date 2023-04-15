@@ -6,7 +6,7 @@ import {
     SaveOutlined
 } from "@ant-design/icons";
 import {useStore} from "@/stores";
-import {useLocation} from "react-router-dom";
+import {useLocation, useNavigate} from "react-router-dom";
 
 const {Sider, Content} = Layout
 
@@ -14,8 +14,10 @@ function AppDetail() {
     //定义State参数
     const [hasViews, setHasViews] = useState(true)
     const [showElem, setShowElem] = useState(true)
+    const [showCheckBox, setShowCheckBox] = useState(false)
     //获取url数据
     const appId = useLocation().state.appId
+    const navigate = useNavigate();
     //调用view list 方法
     const {viewStore} = useStore()
     useEffect(() => {
@@ -67,7 +69,7 @@ function AppDetail() {
     //定义表格选中状态
     const rowSelection = {
         onChange: (selectedRowKeys: React.Key[], selectedRows: DataType[]) => {
-            console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
+
         },
     };
     //定义表格
@@ -96,19 +98,21 @@ function AppDetail() {
                         style={{height: '100%', background: "#f5f5f5",}}
                     >
                         <div>
-                            <Button type="text" icon={<DoubleLeftOutlined/>} size="large"
+                            <Button type="text" icon={<DoubleLeftOutlined />} size="large" onClick={()=>navigate("/")}
                                     style={{marginLeft: "15px", marginTop: "50px"}}></Button>
                             <Button type="text" icon={<SaveOutlined/>} size="large"
                                     style={{marginLeft: "15px", marginTop: "10px"}}></Button>
-                            <Button type="text" icon={<DoubleRightOutlined/>} size="large"
+                            <Button type="text" icon={<DoubleRightOutlined />} size="large"
                                     style={{marginLeft: "15px", marginTop: "10px"}}></Button>
+
                         </div>
                         <Menu.Item onClick={() => setAddRecord(true)}>
                             Add record
                         </Menu.Item>
-                        <Menu.Item>
+                        <Menu.Item onClick={()=>setShowCheckBox(true)}>
                             Delete record
                         </Menu.Item>
+
                     </Menu>
                 </Sider>
                 <Content style={{marginTop: 30, marginLeft: 20, marginRight: 30}}>
@@ -164,6 +168,17 @@ function AppDetail() {
                     </Modal>
                 </Content>
             </Layout>
+            <Modal
+                visible={showCheckBox}
+                title="Delete App"
+                okText="Submit"
+                onOk={() => setShowCheckBox(false)}
+                onCancel={() => {
+                    setShowCheckBox(false)
+                }}
+                destroyOnClose>
+                <p>Are you sure to delete it ?</p>
+            </Modal>
         </div>
     );
 }

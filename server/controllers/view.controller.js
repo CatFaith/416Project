@@ -56,7 +56,6 @@ exports.deleteView = async (req, res) => {
         await View.destroy({where: {id: view.id}}).then(data => {
             res.json(sendResultResponse(data, 200, process.env["SYSTEM_SUCCESS"]))
         }).catch(err => {
-            console.log(111)
             res.json(sendResultResponse(err, 500, process.env["SYSTEM_FAIL"]))
         })
     } else {
@@ -89,8 +88,7 @@ exports.getView = async (req, res) => {
 exports.editView = async (req, res) => {
     const view = req.body;
     const userId = await getAppByPk(view)
-    // console.log(view)
-    // req.user.id is obtained by the calling interface after the token in the request header is resolved. 
+    // req.user.id is obtained by the calling interface after the token in the request header is resolved.
     // It matches whether the current login user is the same as the user in the incoming token
     if (userId == req.user.id) {
         const newView = {

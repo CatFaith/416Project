@@ -1,5 +1,5 @@
 import {Form, Input, message} from "antd";
-import React, {useState} from "react";
+import React from "react";
 import {useStore} from '@/stores'
 
 const EditUser = React.forwardRef((props, ref) => {
@@ -7,7 +7,6 @@ const EditUser = React.forwardRef((props, ref) => {
 //实现提交方法
     async function onFinish(values) {
         await userStore.editUserName(values)
-        console.log(userStore.userRes.code)
         if (userStore.userRes.code == 200) {
             //请求成功后弹出提示框
             message.success('edit success')

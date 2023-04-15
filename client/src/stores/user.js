@@ -7,7 +7,7 @@ import {
     removeToken,
     getId,
     getUName,
-    getGmail, setGmail, setUName, setId
+    getGmail, setGmail, setId, setUName
 } from '@/utils'
 
 class User {
@@ -38,9 +38,8 @@ class User {
         // 存入token
         setToken(this.token)
         setGmail(this.gmail)
-        setUName(this.uname)
         setId(this.id)
-
+        setUName(this.uname)
     }
     // 退出登录
     loginOut = () => {
@@ -48,6 +47,7 @@ class User {
         this.gmail = ''
         this.uname = ''
         removeToken()
+
 
     }
     // 修改用户名称

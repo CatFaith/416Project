@@ -1,11 +1,10 @@
-import {Button, Card, message, Popover} from "antd";
+import {Button, Card, message, Popover, Modal} from "antd";
 import {EditOutlined, EllipsisOutlined, SettingOutlined, ShareAltOutlined, DeleteOutlined} from "@ant-design/icons";
 import app1 from '@/assets/app1.jpg'
 import {useNavigate} from 'react-router-dom'
 import React, {useState} from "react";
 import {useStore} from '@/stores'
 import AppDialog from "@/components/app/AppDialog";
-
 const {Meta} = Card;
 //props:父组件传过来的参数
 const AddCard = (props) => {
@@ -13,12 +12,13 @@ const AddCard = (props) => {
     const [operationType, setOperationType] = useState("edit")
     const [showAppDialog, setShowAppDialog] = useState(false)
     const [showPopover, setShowPopover] = useState(false)
+    const [showCheckBox, setShowCheckBox] = useState(false)
     //通过改变state参数实现弹出来的展开和闭合
     const closeAddDialog = () => {
         setShowAppDialog(false)
     }
     //调用store里的方法
-    const {appStore, viewStore} = useStore()
+    const {appStore, userStore} = useStore()
     //通过useNavigate实现页面跳转
     const navigate = useNavigate();
 
@@ -40,6 +40,8 @@ const AddCard = (props) => {
             message.success('Delete Success')
             appStore.getApps().then()
         }
+        setShowCheckBox(false)
+
     }
     return (
         <Card
@@ -52,8 +54,14 @@ const AddCard = (props) => {
                 />
             }
             actions={[
-                <SettingOutlined key="setting" onClick={goViews}/>,
-                <EditOutlined key="edit" onClick={goAppDetail}/>,
+                <Button type="text" block
+                        onClick={goViews}
+                        disabled={(userStore.id==props.item.userId || props.item.developer.indexOf("," + userStore.id + ",") != -1)?false:true }>
+                    <SettingOutlined key="setting"/>
+                </Button>,
+                <Button type="text" block onClick={goAppDetail}>
+                    <EditOutlined key="edit" />
+                </Button>,
                 <Popover
                     visible={showPopover}
                     placement="top"
@@ -78,18 +86,38 @@ const AddCard = (props) => {
                             <div>
                                 {/*//调用onDelete方法*/}
                                 <Button type="text" size="middle"
-                                        onClick={() => onDelete(props.item.id)}><DeleteOutlined/>Delete</Button>
+                                        onClick={() => {
+                                            setShowCheckBox(true)
+                                            setShowPopover(false)
+                                        }}><DeleteOutlined/>Delete</Button>
                             </div>
+
                         </div>}>
                     {/*//打开关闭弹出框*/}
-                    <EllipsisOutlined key="ellipsis"
-                                      onClick={() => showPopover ? setShowPopover(false) : setShowPopover(true)}/>
+                    <Button type="text"
+                            block
+                            onClick={() => showPopover ? setShowPopover(false) : setShowPopover(true)}
+                            disabled={(userStore.id==props.item.userId || props.item.developer.indexOf("," + userStore.id + ",") != -1)?false:true }>
+                        <EllipsisOutlined key="ellipsis"/>
+                    </Button>
                 </Popover>
             ]}>
             <Meta
                 title={props.item.appName}
                 description={props.item.googleAccount}
             />
+            <Modal
+                visible={showCheckBox}
+                title="Delete App"
+                okText="Submit"
+                onOk={() => onDelete(props.item.id)}
+                onCancel={() => {
+                    setShowCheckBox(false)
+                    setShowPopover(false)
+                }}
+                destroyOnClose>
+                <p>Are you sure to delete {props.item.appName} ?</p>
+            </Modal>
             {/*//调用弹出from表单*/}
             <AppDialog
                 operationType={operationType}
@@ -101,7 +129,13 @@ const AddCard = (props) => {
     );
 }
 
+
+
+
 export default AddCard
+
+
+
 
 
 
