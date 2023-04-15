@@ -52,7 +52,7 @@ async function getGoogleSheetsData(urlArr) {
         let type = []
         const rows = await sheet.getRows();
         //列名称
-        const headerValues = rows[0]._sheet.headerValues;
+        const headerValues = rows[0]._sheet.headerValues; // 获取列的名称
         const rowData = []
         let i = 0;
         //第一行为name，第二行为initialValue，第三行为label，第四行为reference,第五行是类型。数据时从第六行开始
