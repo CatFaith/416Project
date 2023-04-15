@@ -2,7 +2,8 @@ const db = require("../models");
 const App = db.app;
 const Op = db.Op;
 const {getUserByGoogleAccount} = require("./user.controller");
-const {sendResultResponse} = require("../utils/responseFrom")
+const {sendResultResponse} = require("../utils/responseFrom");
+const {getGoogleSheetAuthorization} = require("../utils/googleSheet");
 
 /**
  * req.user.id is obtained by the calling interface after the token in the request header is resolved. 
@@ -84,6 +85,60 @@ exports.getApp = async (req, res) => {
         }).catch(err => {
             res.json(sendResultResponse(err, 500, process.env["SYSTEM_FAIL"]))
         })
+    }
+};
+
+/**
+ * 登录后获取有权限的APP
+ * @param req
+ * @param res
+ * @returns {Promise<void>}
+ */
+exports.getAppAfterLogin = async (req, res) => {
+    const user = req.user;
+    const googleAccount = user.googleAccount;
+    //定义返回给前端的列表
+    const returnAppData = {}
+    //1,获取所有的APP，根据roleMemberSheet字段调用google sheet api
+    await App.findAll().then(data => {
+        //2,循环app的数据，然后调用google sheet api
+        for (const item of data){
+            //2.1 取出/d后的字符串和gid
+            //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
+            const result = getGoogleSheetAuthorization(item.roleMemberSheet)
+            //result格式[1@gamil.com,2@gamil.com,3@gamil.com,4@gamil.com]
+            //3,解析返回的数据，判断是否包含当前登录用户的谷歌账号
+            if (result != null){
+                if (result.indexOf(googleAccount) != -1){
+                    returnAppData.add(item)
+                }
+            }
+        }
+        //4,将匹配到的app数据返回给前端
+        res.json(sendResultResponse(returnAppData, 200, process.env["SYSTEM_SUCCESS"]))
+    }).catch(err => {
+        res.json(sendResultResponse(err, 500, process.env["SYSTEM_FAIL"]))
+    })
+};
+
+/**
+ * 每次打开/修改/分享/删除app前都判断权限
+ * @param req
+ * @param res
+ * @returns true/false
+ */
+exports.checkAuthorization = async (req, res) => {
+    //1，点击app时，根据app的roleMemberSheet，判断当前用户是否有权限打开app
+    const app = req.body;
+    //2，调用google sheet获取数据
+    const result = getGoogleSheetAuthorization(app.roleMemberSheet)
+    if (result != null){
+        //3，根据返回的数据，判断是否有权限
+        if (result.indexOf(googleAccount) != -1){
+            res.json(sendResultResponse(true, 200, process.env["SYSTEM_SUCCESS"]))
+        }else {
+            res.json(sendResultResponse(false, 200, process.env["SYSTEM_SUCCESS"]))
+        }
     }
 };
 
