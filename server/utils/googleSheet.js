@@ -7,8 +7,8 @@ const { GoogleSpreadsheet } = require('google-spreadsheet');
 async function getGoogleSheetAuthorization(url) {
     //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
     const result = [];
-    const sheet = await getSheet(url);
-    const rows = await sheet.getRows();
+    const sheet = await getSheet(url); // 返回sheet
+    const rows = await sheet.getRows(); // 获取所有行
     for (row of rows) {
         result.push(row._rawData);
     }
@@ -52,7 +52,7 @@ async function getGoogleSheetsData(urlArr) {
         let type = []
         const rows = await sheet.getRows();
         //列名称
-        const headerValues = rows[0]._sheet.headerValues;
+        const headerValues = rows[0]._sheet.headerValues; // 获取列的名称
         const rowData = []
         let i = 0;
         //第一行为name，第二行为initialValue，第三行为label，第四行为reference,第五行是类型。数据时从第六行开始
@@ -86,7 +86,7 @@ async function getGoogleSheetsData(urlArr) {
         }
         result.push(data)
     }
-    return result;
+    return result; //数组，好几个data
 };
 
 /**
@@ -100,7 +100,7 @@ async function getGoogleSheetDoc(url) {
     //先把d/前和后分为数组的两个元素
     const arr = url.split('d/')[1];
     const docId = arr.split('/')[0];
-    const credentialsPath = '../static/sheet2app.json'
+    const credentialsPath = '../static/sheet2app.json' // 密钥
     const doc = new GoogleSpreadsheet(docId);
     const creds = require(credentialsPath);
     await doc.useServiceAccountAuth(creds);
@@ -132,9 +132,9 @@ async function getGoogleSheetIds(url) {
  */
 async function addViewSheet(url, sheetName) {
     //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
-    const doc = await getGoogleSheetDoc(url)
+    const doc = await getGoogleSheetDoc(url) //官方返回doc
     const sheet = await doc.addSheet({title: sheetName});
-    return sheet;
+    return sheet; //目前没有权限！！！
 };
 
 /**
