@@ -10,7 +10,7 @@ module.exports = function(app) {
                 "^/api": ""
             },
             onProxyReq: function onProxyReq(proxyReq, req, res) {
-                console.log('-->  ', req.method, req.baseUrl, '->', proxyReq.host + proxyReq.path);
+
             },
         })
     );

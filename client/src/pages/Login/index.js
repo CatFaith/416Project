@@ -13,7 +13,7 @@ function Login() {
         await userStore.login(values)
         // 跳转首页
         navigate('/', {replace: true})
-        message.success('login suucess')
+        message.success('登录成功')
     }
     return (
         <div className="login">
@@ -50,7 +50,7 @@ function Login() {
                     </Form.Item>
                     <Form.Item>
                         <Button type="primary" htmlType="submit" size="large" block>
-                            login
+                            登录
                         </Button>
                     </Form.Item>
                 </Form>

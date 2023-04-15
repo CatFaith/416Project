@@ -1,7 +1,7 @@
 'use strict';
 
-const fs = require('fs'); // 
-const path = require('path'); // 
+const fs = require('fs'); // ?
+const path = require('path'); // ?
 const Sequelize = require('sequelize');
 const {Op} = require("sequelize");
 const process = require('process');
@@ -40,8 +40,8 @@ Object.keys(db).forEach(modelName => {
   }
 });
 
-db.sequelize = sequelize; // 
-db.Sequelize = Sequelize; // 
+db.sequelize = sequelize; // ？
+db.Sequelize = Sequelize; // ？
 
 db.app = require("./app.model")(sequelize, Sequelize);
 db.user = require("./user.model")(sequelize, Sequelize);

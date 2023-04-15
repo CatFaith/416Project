@@ -1,4 +1,4 @@
-import {Button, Col, Menu, message, Popover, Row} from "antd";
+import {Button, Col, Menu, message, Modal, Popover, Row} from "antd";
 import {DeleteOutlined, EditOutlined, FileTextOutlined, MoreOutlined, PlusOutlined} from "@ant-design/icons";
 import React, {useState} from "react";
 import ViewDialog from "@/components/view/ViewDialog";
@@ -9,6 +9,7 @@ const ViewMenus = (props) => {
     const {viewStore} = useStore()
     const [showViewDialog, setShowViewDialog] = useState(false)
     const [operationType, setOperationType] = useState("create")
+    const [showCheckBox, setShowCheckBox] = useState(false)
     const [view, setView] = useState([])
     const closeViewDialog = () => {
         setShowViewDialog(false)
@@ -69,22 +70,41 @@ const ViewMenus = (props) => {
                                 content={
                                     <div>
                                         <div>
-                                            <Button type="text" size="middle" onClick={() => {
-                                                setView(item);
-                                                setShowViewDialog(true);
-                                                setOperationType("edit")
-                                            }}><EditOutlined/>Edit</Button>
+                                            <Button type="text"
+                                                    size="middle"
+                                                    disabled={showViewDialog||showCheckBox}
+                                                    onClick={() => {
+                                                        setView(item);
+                                                        setShowViewDialog(true);
+                                                        setOperationType("edit")
+                                                    }}><EditOutlined/>Edit</Button>
                                         </div>
                                         <div>
-                                            <Button type="text" size="middle" onClick={()=>onDelete(item)}><DeleteOutlined/>Delete</Button>
+                                            <Button type="text"
+                                                    size="middle"
+                                                    disabled={showViewDialog||showCheckBox}
+                                                    onClick={() => setShowCheckBox(true)}><DeleteOutlined/>Delete</Button>
                                         </div>
                                     </div>}>
                                 <MoreOutlined key="ellipsis"/>
                             </Popover>
                         </Col>
                     </Row>
+                    <Modal
+                        visible={showCheckBox}
+                        title="Delete View"
+                        okText="Submit"
+                        onOk={() => onDelete(item)}
+                        onCancel={() => {
+                            setShowCheckBox(false)
+                        }}
+                        destroyOnClose>
+                        <p>Are you sure to delete {item.viewName} ?</p>
+                    </Modal>
                 </Menu.Item>
             }) : null}
+
+
             {/*//设置弹出表单*/}
             <ViewDialog
                 item={view}
