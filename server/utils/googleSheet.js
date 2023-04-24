@@ -1,5 +1,6 @@
 // googleSheet.js
 const { GoogleSpreadsheet } = require('google-spreadsheet');
+const EMUN = require("../utils/emun")
 
 /**
  * @param  {String} url 是google sheet的url
@@ -9,6 +10,9 @@ async function getGoogleSheetAuthorization(url) {
     const result = [];
     const sheet = await getSheet(url); // 返回sheet
     const rows = await sheet.getRows(); // 获取所有行
+    //列名称
+    const headerValues = rows[0]._sheet.headerValues;
+    result.push(headerValues)
     for (row of rows) {
         result.push(row._rawData);
     }
@@ -52,7 +56,7 @@ async function getGoogleSheetsData(urlArr) {
         let type = []
         const rows = await sheet.getRows();
         //列名称
-        const headerValues = rows[0]._sheet.headerValues; // 获取列的名称
+        const headerValues = rows[0]._sheet.headerValues;
         const rowData = []
         let i = 0;
         //第一行为name，第二行为initialValue，第三行为label，第四行为reference,第五行是类型。数据时从第六行开始
@@ -134,16 +138,35 @@ async function addViewSheet(url, sheetName) {
     //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
     const doc = await getGoogleSheetDoc(url) //官方返回doc
     const sheet = await doc.addSheet({title: sheetName});
-    return sheet; //目前没有权限！！！
+    //新的Sheet页面添加好了以后，就添加每个Sheet都固定有的4列
+    await sheet.setHeaderRow(EMUN.NEW_SHEET_COLUMN)
+    // add rows
+    await sheet.addRows(EMUN.NEW_SHEET_INIT);
+    await sheet.addRows(EMUN.NEW_SHEET_LABEL);
+    await sheet.addRows(EMUN.NEW_SHEET_REF);
+    await sheet.addRows(EMUN.NEW_SHEET_TYPE);
+    return sheet;
+};
+
+/**
+ * 根据google Sheet的地址删除对应的表格
+ * @param url
+ * @returns {Promise<*>}
+ */
+async function deleteViewSheet(url) {
+    //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
+    const sheet = await getSheet(url);
+    const res = await sheet.delete();
+    return res;
 };
 
 /**
  * 修改数据，
  * @param url  url为APP的saveDatURL，创建view，在googlesheet创建多一个sheet页
  * @param data : [
-                 { name: 'Sergey Brin', email: 'sergey@google.com' },
-                 { name: 'Eric Schmidt', email: 'eric@google.com' },
-                 ]
+ { name: 'Sergey Brin', email: 'sergey@google.com' },
+ { name: 'Eric Schmidt', email: 'eric@google.com' },
+ ]
  * @returns {Promise<*>}
  */
 async function addSheetData(url, data) {
@@ -164,12 +187,21 @@ async function addSheetData(url, data) {
 async function editSheetData(url, rowNum, data) {
     //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
     const sheet = await getSheet(url);
+    await sheet.setHeaderRow(data[0])
     // get rows
     const rows = await sheet.getRows();
+    let rowOne = rows[0]._rawData
+    if (rowOne.length != data[0].length){
+        //长度不相等，代表新增了列
+        rowOne.push("")
+        await rows[0].save();
+    }
     // edit rows
-    rows[rowNum]._rawData = data;
-    // save updates
-    await rows[rowNum].save();
+    for (const num of rowNum){
+        rows[num]._rawData = data[num];
+        // save updates
+        await rows[num].save();
+    }
     return rows;
 };
 
@@ -196,8 +228,8 @@ module.exports = {
     getGoogleSheetDoc,
     getGoogleSheetIds,
     addViewSheet,
+    deleteViewSheet,
     addSheetData,
     editSheetData,
     deleteSheetData
 };
-

@@ -1,11 +1,13 @@
 const db = require("../models");
 const User = db.user;
 const Op = db.Op;
+const {addLog} = require("./log.controller")
+const EMUN = require("../utils/emun")
 const {getToken} = require("../utils/token")
 const {sendResultResponse} = require("../utils/responseFrom")
 
 /**
- * req.user.id is obtained by the calling interface after the token in the request header is resolved. 
+ * req.user.id is obtained by the calling interface after the token in the request header is resolved.
  * If the id of the current login user is the same as that of the user in the token, the database can be operated only if the ID is the same.
  */
 
@@ -25,13 +27,15 @@ exports.login = async (req, res) => {
     await User.findOne({where: {googleAccount: user.googleAccount}}).then(data => {
         if (data) {
             //如果查询出来的数据不为空，代表此用户之前已经登录过系统，则无需再新增数据到user表，只需正常的返回用户信息和token即可
-            res.json(sendResultResponse({data, token: getToken(data)}, 200, process.env["SYSTEM_SUCCESS"]))
+            res.json(sendResultResponse({data, token: getToken(data)}, 200, process.env[EMUN.SYSTEM_SUCCESS]))
         } else {
             // If it detects that the current Gmail user has not logged in to the system, the user creates a new record
             User.create(newUser).then(data => {
-                res.json(sendResultResponse({data, token: getToken(data)}, 200, process.env["SYSTEM_SUCCESS"]))
+                res.json(sendResultResponse({data, token: getToken(data)}, 200, process.env[EMUN.SYSTEM_SUCCESS]))
             }).catch(err => {
-                res.json(sendResultResponse(err, 500, process.env["SYSTEM_FAIL"]))
+                //添加日志记录
+                addLog(EMUN.ERROR, EMUN.LOGIN, 'login', err, req.user.googleAccount)
+                res.json(sendResultResponse(err, 500, process.env[EMUN.SYSTEM_FAIL]))
             })
         }
     })
@@ -47,9 +51,11 @@ exports.deleteUser = async (req, res) => {
     const user = req.body
     //根据主键Id进行删除，确保删除数据的唯一性
     await User.destroy({where: {id: user.id}}).then(data => {
-        res.json(sendResultResponse(data, 200, process.env["SYSTEM_SUCCESS"]))
+        res.json(sendResultResponse(data, 200, process.env[EMUN.SYSTEM_SUCCESS]))
     }).catch(err => {
-        res.json(sendResultResponse(err, 500, process.env["SYSTEM_FAIL"]))
+        //添加日志记录
+        addLog(EMUN.ERROR, EMUN.USER, 'deleteUser', err, req.user.googleAccount)
+        res.json(sendResultResponse(err, 500, process.env[EMUN.SYSTEM_FAIL]))
     })
 };
 
@@ -69,12 +75,16 @@ exports.editUser = async (req, res) => {
         };
         //根据主键Id进行更新，确保更新数据的唯一性
         await User.update(newUser, {where: {id: user.id}}).then(data => {
-            res.json(sendResultResponse(data.length, 200, process.env["SYSTEM_SUCCESS"]))
+            res.json(sendResultResponse(data.length, 200, process.env[EMUN.SYSTEM_SUCCESS]))
         }).catch(err => {
-            res.json(sendResultResponse(err, 500, process.env["SYSTEM_FAIL"]))
+            //添加日志记录
+            addLog(EMUN.ERROR, EMUN.USER, 'editUser', err, req.user.googleAccount)
+            res.json(sendResultResponse(err, 500, process.env[EMUN.SYSTEM_FAIL]))
         });
     } else {
-        res.json({result: process.env["TOKEN_ERROR_MSG"]})
+        //添加日志记录
+        addLog(EMUN.ERROR, EMUN.USER, 'editUser', process.env[EMUN.TOKEN_ERROR_MSG], req.user.googleAccount)
+        res.json({result: process.env[EMUN.TOKEN_ERROR_MSG]})
     }
 };
 
@@ -89,12 +99,16 @@ exports.getUser = async (req, res) => {
     //req.user.id是调用接口在请求头传入的token解析后得到的，匹配当前登录用户和传入token中的用户是否一致，是一致的才能操作数据库数据
     if (user.id == req.user.id) {
         await User.findOne({where: {id: user.id}}).then(data => {
-            res.json(sendResultResponse(data, 200, process.env["SYSTEM_SUCCESS"]))
+            res.json(sendResultResponse(data, 200, process.env[EMUN.SYSTEM_SUCCESS]))
         }).catch(err => {
-            res.json(sendResultResponse(err, 500, process.env["SYSTEM_FAIL"]))
+            //添加日志记录
+            addLog(EMUN.ERROR, EMUN.USER, 'getUser', err, req.user.googleAccount)
+            res.json(sendResultResponse(err, 500, process.env[EMUN.SYSTEM_FAIL]))
         })
     } else {
-        res.json({result: process.env["TOKEN_ERROR_MSG"]})
+        //添加日志记录
+        addLog(EMUN.ERROR, EMUN.USER, 'getUser', process.env[EMUN.TOKEN_ERROR_MSG], req.user.googleAccount)
+        res.json({result: process.env[EMUN.TOKEN_ERROR_MSG]})
     }
 };
 
@@ -110,9 +124,11 @@ exports.getUserList = async (req, res) => {
         id: {[Op.ne]:req.user.id}
     };
     await User.findAll({where}).then(data => {
-        res.json(sendResultResponse(data, 200, process.env["SYSTEM_SUCCESS"]))
+        res.json(sendResultResponse(data, 200, process.env[EMUN.SYSTEM_SUCCESS]))
     }).catch(err => {
-        res.json(sendResultResponse(err, 500, process.env["SYSTEM_FAIL"]))
+        //添加日志记录
+        addLog(EMUN.ERROR, EMUN.USER, 'getUserList', err, req.user.googleAccount)
+        res.json(sendResultResponse(err, 500, process.env[EMUN.SYSTEM_FAIL]))
     })
 };
 

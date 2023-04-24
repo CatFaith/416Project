@@ -20,7 +20,8 @@ module.exports = (sequelize, DataTypes) => {
     columns: DataTypes.INTEGER,
     viewType: DataTypes.STRING,
     allowedActions: DataTypes.STRING,
-    roles: DataTypes.STRING
+    roles: DataTypes.STRING,
+    editColumns: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'View',

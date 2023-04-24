@@ -1,9 +1,12 @@
 const db = require("../models");
 const App = db.app;
 const Op = db.Op;
+const {addLog} = require("./log.controller")
+const EMUN = require("../utils/emun")
 const {getUserByGoogleAccount} = require("./user.controller");
 const {sendResultResponse} = require("../utils/responseFrom");
 const {getGoogleSheetAuthorization} = require("../utils/googleSheet");
+// const {getViewByAppId} = require("./view.controller");
 
 /**
  * req.user.id is obtained by the calling interface after the token in the request header is resolved.
@@ -31,9 +34,11 @@ exports.createApp = async (req, res) => {
         appName: app.appName
     };
     await App.create(newApp).then(data => {
-        res.json(sendResultResponse(data, 200, process.env["SYSTEM_SUCCESS"]))
+        res.json(sendResultResponse(data, 200, process.env[EMUN.SYSTEM_SUCCESS]))
     }).catch(err => {
-        res.json(sendResultResponse(err, 500, process.env["SYSTEM_FAIL"]))
+        //添加日志记录
+        addLog(EMUN.ERROR, EMUN.APP, 'createApp', err, req.user.googleAccount)
+        res.json(sendResultResponse(err, 500, process.env[EMUN.SYSTEM_FAIL]))
     })
 };
 
@@ -50,12 +55,16 @@ exports.deleteApp = async (req, res) => {
     if (app.userId == req.user.id) {
         //根据主键Id进行删除，确保删除数据的唯一性
         await App.destroy({where: {id: app.id}}).then(data => {
-            res.json(sendResultResponse(data, 200, process.env["SYSTEM_SUCCESS"]))
+            res.json(sendResultResponse(data, 200, process.env[EMUN.SYSTEM_SUCCESS]))
         }).catch(err => {
-            res.json(sendResultResponse(err, 500, process.env["SYSTEM_FAIL"]))
+            //添加日志记录
+            addLog(EMUN.ERROR, EMUN.APP, 'deleteApp', err, req.user.googleAccount)
+            res.json(sendResultResponse(err, 500, process.env[EMUN.SYSTEM_FAIL]))
         })
     } else {
-        res.json({result: process.env["TOKEN_ERROR_MSG"]})
+        //添加日志记录
+        addLog(EMUN.ERROR, EMUN.APP, 'deleteApp', process.env[EMUN.TOKEN_ERROR_MSG], req.user.googleAccount)
+        res.json({result: process.env[EMUN.TOKEN_ERROR_MSG]})
     }
 };
 
@@ -81,12 +90,40 @@ exports.getApp = async (req, res) => {
             ],
         }; // The like operator is used to blur match strings in a query. We used the % wildcard to match any character, so the query returns a record containing the endUserIds value for the specified user ID.
         await App.findAll({where}).then(data => {
-            res.json(sendResultResponse(data, 200, process.env["SYSTEM_SUCCESS"]))
+            res.json(sendResultResponse(data, 200, process.env[EMUN.SYSTEM_SUCCESS]))
         }).catch(err => {
-            res.json(sendResultResponse(err, 500, process.env["SYSTEM_FAIL"]))
+            //添加日志记录
+            addLog(EMUN.ERROR, EMUN.APP, 'deleteApp', err, req.user.googleAccount)
+            res.json(sendResultResponse(err, 500, process.env[EMUN.SYSTEM_FAIL]))
         })
     }
 };
+
+// /**
+//  * 根据appId查询所有的APP数据，返回给前端进行渲染及缓存
+//  * @param req
+//  * @param res
+//  * @returns {Promise<void>}
+//  */
+// exports.getAppDetailById = async (req, res) => {
+//     const user = req.user;
+//     const app = req.body;
+//     // 1，根据appId查询所有的view
+//     const viewData = await getViewByAppId(app.id)
+//     if (viewData != null) {
+//         // 2，根据view中的saveDataURL从google sheet获取表格第六行开始至末尾的数据
+//         for (const view of viewData){
+//             //循环viewData，其中dataValues属性才是真正的数据
+//
+//         }
+//         // 3，根据app的role member sheet查出当前登录账号属于哪个role。
+//
+//         // 4，查询view表MySQL数据库，查出所有的角色信息。判断第3步的role具有什么权限？？可见列有哪些？？
+//
+//         // 5，根据第四步返回的数据，组装数据返回给前端，此处要用循环，因为一个app下有多个view，每一个view都需要组装
+//
+//     }
+// };
 
 /**
  * 登录后获取有权限的APP
@@ -116,9 +153,9 @@ exports.getAppAfterLogin = async (req, res) => {
             }
         }
         //4,将匹配到的app数据返回给前端
-        res.json(sendResultResponse(returnAppData, 200, process.env["SYSTEM_SUCCESS"]))
+        res.json(sendResultResponse(returnAppData, 200, process.env[EMUN.SYSTEM_SUCCESS]))
     }else {
-        res.json(sendResultResponse(null, 200, process.env["SYSTEM_SUCCESS"]))
+        res.json(sendResultResponse(null, 200, process.env[EMUN.SYSTEM_SUCCESS]))
     }
 };
 
@@ -138,9 +175,9 @@ exports.checkAuthorization = async (req, res) => {
     if (result != null){
         //3，根据返回的数据，判断是否有权限
         if (result.toString().indexOf(googleAccount) != -1){
-            res.json(sendResultResponse(true, 200, process.env["SYSTEM_SUCCESS"]))
+            res.json(sendResultResponse(true, 200, process.env[EMUN.SYSTEM_SUCCESS]))
         }else {
-            res.json(sendResultResponse(false, 200, process.env["SYSTEM_SUCCESS"]))
+            res.json(sendResultResponse(false, 200, process.env[EMUN.SYSTEM_SUCCESS]))
         }
     }
 };
@@ -199,12 +236,16 @@ exports.editApp = async (req, res) => {
         };
         //根据主键Id进行更新，确保更新数据的唯一性
         await App.update(newApp, {where: {id: app.id}}).then(data => {
-            res.json(sendResultResponse(data.length, 200, process.env["SYSTEM_SUCCESS"]))
+            res.json(sendResultResponse(data.length, 200, process.env[EMUN.SYSTEM_SUCCESS]))
         }).catch(err => {
-            res.json(sendResultResponse(err, 500, process.env["SYSTEM_FAIL"]))
+            //添加日志记录
+            addLog(EMUN.ERROR, EMUN.APP, 'editApp', err, req.user.googleAccount)
+            res.json(sendResultResponse(err, 500, process.env[EMUN.SYSTEM_FAIL]))
         });
     } else {
-        res.json(sendResultResponse('', 401, process.env["TOKEN_ERROR_MSG"]))
+        //添加日志记录
+        addLog(EMUN.ERROR, EMUN.APP, 'editApp', process.env[EMUN.TOKEN_ERROR_MSG], req.user.googleAccount)
+        res.json(sendResultResponse('', 401, process.env[EMUN.TOKEN_ERROR_MSG]))
     }
 };
 
@@ -223,12 +264,16 @@ exports.setPublished = async (req, res) => {
             published: app.published
         };
         await App.update(newApp, {where: {id: app.id}}).then(data => {
-            res.json(sendResultResponse(data.length, 200, process.env["SYSTEM_SUCCESS"]))
+            res.json(sendResultResponse(data.length, 200, process.env[EMUN.SYSTEM_SUCCESS]))
         }).catch(err => {
-            res.json(sendResultResponse(err, 500, process.env["SYSTEM_FAIL"]))
+            //添加日志记录
+            addLog(EMUN.ERROR, EMUN.APP, 'setPublished', err, req.user.googleAccount)
+            res.json(sendResultResponse(err, 500, process.env[EMUN.SYSTEM_FAIL]))
         });
     } else {
-        res.json(sendResultResponse('', 401, process.env["TOKEN_ERROR_MSG"]))
+        //添加日志记录
+        addLog(EMUN.ERROR, EMUN.APP, 'setPublished', process.env[EMUN.TOKEN_ERROR_MSG], req.user.googleAccount)
+        res.json(sendResultResponse('', 401, process.env[EMUN.TOKEN_ERROR_MSG]))
     }
 };
 
@@ -270,15 +315,19 @@ exports.shareApp = async (req, res) => {
                 endUserIds: endUserIds
             };
             await App.update(newApp, {where: {id: app.id}}).then(data => {
-                res.json(sendResultResponse(data.length, 200, process.env["SYSTEM_SUCCESS"]))
+                res.json(sendResultResponse(data.length, 200, process.env[EMUN.SYSTEM_SUCCESS]))
             }).catch(err => {
-                res.json(sendResultResponse(err, 500, process.env["SYSTEM_FAIL"]))
+                //添加日志记录
+                addLog(EMUN.ERROR, EMUN.APP, 'shareApp', err, req.user.googleAccount)
+                res.json(sendResultResponse(err, 500, process.env[EMUN.SYSTEM_FAIL]))
             });
         } else {
-            res.json(sendResultResponse('', 500, process.env["SYSTEM_FAIL"]))
+            res.json(sendResultResponse('', 500, process.env[EMUN.SYSTEM_FAIL]))
         }
     } else {
-        res.json(sendResultResponse('', 400, process.env["PARMAS_HIATUS"]))
+        //添加日志记录
+        addLog(EMUN.ERROR, EMUN.APP, 'shareApp', process.env[EMUN.PARMAS_HIATUS], req.user.googleAccount)
+        res.json(sendResultResponse('', 400, process.env[EMUN.PARMAS_HIATUS]))
     }
 };
 

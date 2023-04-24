@@ -15,6 +15,7 @@ const loginRouter = require('./routes/api/login');
 const appRouter = require('./routes/api/app');
 const userRouter = require('./routes/api/user');
 const viewRouter = require('./routes/api/view');
+const logRouter = require('./routes/api/log');
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.use('/', loginRouter);
 app.use('/app', appRouter);
 app.use('/user', userRouter);
 app.use('/view', viewRouter);
+app.use('/log', logRouter);
 
 
 // catch 404 and forward to error handler
