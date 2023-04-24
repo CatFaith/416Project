@@ -37,6 +37,10 @@ module.exports = {
         type: Sequelize.STRING,
         comment:''
       },
+      editColumns: {
+        type: Sequelize.STRING,
+        comment:''
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
