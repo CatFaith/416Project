@@ -8,6 +8,8 @@ import AppDialog from "@/components/app/AppDialog";
 const {Meta} = Card;
 //props:父组件传过来的参数
 const AddCard = (props) => {
+    // const [messageApi, contextHolder] = message.useMessage();
+    // messageApi.open({type: 'warning',content: 'This is a warning message', });
     //state参数：在页面实现双向绑定
     const [operationType, setOperationType] = useState("edit")
     const [showAppDialog, setShowAppDialog] = useState(false)
@@ -22,14 +24,22 @@ const AddCard = (props) => {
     //通过useNavigate实现页面跳转
     const navigate = useNavigate();
 
-
+    const isHasPermission=(url)=>{
+        appStore.checkAuthorization(props.item).then(()=>{
+            if (appStore.authorization){
+                navigate(url);
+            }else {
+                message.warning('No Permission')
+            }
+        })
+    }
     const goViews = () => {
+        isHasPermission("/"+props.item.id+"/views")
         //页面跳转到views
-        navigate("/views", {state: {appId: props.item.id}});
     }
     const goAppDetail = () => {
         //页面跳转到appDetail
-        navigate("/appDetail", {state: {appId: props.item.id}});
+        isHasPermission("/"+props.item.id+"/detail")
     }
 
     const onDelete = async (id) => {
@@ -38,10 +48,11 @@ const AddCard = (props) => {
         if (appStore.app.code == 200) {
             //返回状态码为200调用message组件提示
             message.success('Delete Success')
-            appStore.getApps().then()
+            appStore.getApps().then(()=>{
+                }
+            )
         }
         setShowCheckBox(false)
-
     }
     return (
         <Card

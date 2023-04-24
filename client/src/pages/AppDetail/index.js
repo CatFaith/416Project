@@ -1,91 +1,247 @@
-import {Button, Layout, Menu, Tabs, Radio, Table, Space, Modal, Form, Input, Row} from "antd";
-import React, {useEffect, useState} from 'react';
+import {Button, Layout, Menu, Tabs, Radio, Table, Space, Modal, Form, Input, Row, Popconfirm, message} from "antd";
+import React, {useEffect, useState,useRef} from 'react';
 import {
     DoubleLeftOutlined,
-    DoubleRightOutlined,
-    SaveOutlined
+    DoubleRightOutlined, EditOutlined,
+    SaveOutlined,ProfileOutlined,UserOutlined,BankOutlined
 } from "@ant-design/icons";
 import {useStore} from "@/stores";
-import {useLocation, useNavigate} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
+import {observer} from "mobx-react-lite";
 
 const {Sider, Content} = Layout
 
-function AppDetail() {
-    //定义State参数
-    const [hasViews, setHasViews] = useState(true)
-    const [showElem, setShowElem] = useState(true)
-    const [showCheckBox, setShowCheckBox] = useState(false)
-    //获取url数据
-    const appId = useLocation().state.appId
+const AppDetail=()=> {
+    const [form] = Form.useForm();
+
+    let referenceList=[]
+    let [reference,setReference ]= useState([])
+    let [allowedAction,setAllowedAction ]= useState([])
+    // const allowedActionRef = useRef();
+    // useEffect(() => {
+    //     allowedActionRef.current = allowedAction;
+    // }, [allowedAction]);
+    // let nameList=[]
+    let [nameList,setNameList ]= useState([])
+    let [editNameList,setEditNameList ]= useState([])
+    let [fromNames,setFromNames ]= useState([])
+    let [fromType,setFromType ]= useState('')
+    let [dataList,setDataList ]= useState([])
+    // let [addRecordTitle,setAddRecordTitle]= useState([])
+    let dataItem=''
+    let idIndex=null
+    const {viewStore,userStore} = useStore()
+    const appId = useParams().appId
     const navigate = useNavigate();
-    //调用view list 方法
-    const {viewStore} = useStore()
+    let [columns,setColumns]=useState([])
+    let viewId=null
+    let showType="all"
+    const getTableData=()=>{
+        console.log("showType",showType)
+        dataList=[]
+        setDataList(dataList=[])
+        columns=[]
+        setColumns([])
+        viewStore.detailData.map((item,index)=>{
+            if(viewId==null? index==0:item.id==viewId){
+                viewId=item.id
+                item.reference.map((item,index)=>{
+                    referenceList.push(item[0])
+                })
+                reference=item.reference
+                setReference(reference)
+                allowedAction=item.allowedAction
+                setAllowedAction(allowedAction)
+                editNameList=item.editableColumns
+                setEditNameList(editNameList)
+                item.viewData.map((item,index)=>{
+                    if (index==0){
+                        nameList =item.rowData
+                        setNameList(nameList)
+                        item.rowData.map((item,index)=>{
+                            if (item=="id"){
+                                idIndex=index
+                            }
+                            if (referenceList.indexOf(item) != -1){
+                                // columns.push({title: item, dataIndex: item, key:item,render: (text: string) => <a onClick={showRefData}>{text}</a>})
+
+                                columns.push({title: item, dataIndex: item, key:item,render: (text: string) => <a onClick={()=>showRefData(item,text)}>{text}</a>})
+                            }else {
+                                columns.push({title: item, dataIndex: item, key: item})
+                            }
+                        })
+                    }else {
+                        let rowDataL= item.rowData.length
+                        item.rowData.map((item,index)=>{
+                                if(index==0){
+                                    dataItem ='{'
+                                }
+                                if (index==idIndex){
+                                    dataItem=dataItem+'"key":'+item+','
+                                }
+                                dataItem=dataItem+'"'+nameList[index]+'":'+'"'+item+'"'
+                                if (index<(rowDataL-1)){
+                                    dataItem=dataItem+','
+                                }
+                                if(index==(rowDataL-1)){
+                                    dataItem =dataItem+'}'
+                                }
+                        })
+                        dataList.push({...JSON.parse(dataItem)})
+                        let changeList =[]
+                        if(showType=="userFilter"){
+                            dataList.map((item)=>{
+                                if(item.createBy.toString() ==userStore.gmail.toString()){
+                                    changeList.push(item)
+                                }
+                            })
+                            dataList = changeList
+                        }
+                        if (showType=="filter"){
+                            dataList.map((item)=>{
+                                if(item.filter.toString() =="TRUE"){
+                                    changeList.push(item)
+                                }
+                            })
+                            dataList = changeList
+                        }
+                    }
+                })
+            }
+        })
+        if (dataList.length!=0){
+            setDataList([...dataList])
+            setColumns([...columns,{
+                title: 'Action',
+                dataIndex: '',
+                key: 'x',
+                render:(_, record: { key: React.Key }) =>
+                    dataList.length >= 1 ? (
+                        <div>
+                            <a hidden={allowedAction.indexOf("edit") == -1} onClick={() => editColumns(record)} style={{marginRight: "10px"}}>Edit</a>
+                            <a hidden={allowedAction.indexOf("delete") == -1} onClick={() => deleteColumns(record.key)}>Delete</a>
+                        </div>
+                    ) : null,
+            }])
+        }
+    }
+
     useEffect(() => {
-        viewStore.getViews(appId).then(() => {
-            setHasViews(viewStore.views)
+        viewStore.getViewForGoogleSheet(appId).then(()=>{
+            getTableData()
         })
     }, viewStore)
-    //定义表格数据
-    const dataSource = [
-        {
-            key: '1',
-            name: 'ray',
-            email: "ray@gmail.com",
-            phone: '13525425876',
-        },
-        {
-            key: '2',
-            name: 'lay',
-            email: "lay@gmail.com",
-            phone: '13525425876',
-        },
-    ];
-    //定义表格头
-    const columns = [
-        {
-            title: 'Name',
-            dataIndex: 'name',
-            key: 'name',
-        },
-        {
-            title: 'Email',
-            dataIndex: 'email',
-            key: 'email',
-        },
-        {
-            title: 'Phone',
-            dataIndex: 'phone',
-            key: 'phone',
-        }, {
-            title: 'Action',
-            key: 'action',
-            render: () => (
-                <Space size="middle">
-                    <a>Edit</a>
-                </Space>
-            ),
-        },
-    ];
-    //定义表格选中状态
-    const rowSelection = {
-        onChange: (selectedRowKeys: React.Key[], selectedRows: DataType[]) => {
 
-        },
-    };
-    //定义表格
-    const children = <Table dataSource={dataSource} columns={columns}
-                            rowSelection={{type: "checkbox", ...rowSelection,}}/>
-    //定义标签数据
-    const [views, setViews] = useState(viewStore.views.map((item) => {
-        return {
-            label: item.viewName,
-            key: item.id,
-            children: children,
-        };
-    }))
+    const children =  <Table columns={columns} dataSource={dataList}/>
 
-    //定义stata参数
     const [addRecord, setAddRecord] = useState(false);
+    const [showCheckBox, setShowCheckBox] = useState(false)
+    const [recordId, setRecordId] = useState(false)
+    const  deleteColumns=(id)=>{
+        setShowCheckBox(true)
+        setRecordId(id)
+        console.log(id)
+    }
+    const onDelete = async (value) => {
+        console.log(value)
+    }
+
+    const showRefData = async (refName,refId) => {
+        setFromType("Show")
+        let refTableName= reference.map((item)=>{
+            if (item[0]==refName){
+                return item[1].toString()
+            }
+        }).toString()
+        refId=11
+        refTableName="course"
+        let refIdIndex=null
+        let refDate =[]
+        let refTitle=[]
+        viewStore.detailData.map((item)=>{
+            if (item.viewName==refTableName){
+                item.viewData.map((item,index)=>{
+                    if(index==0){
+                        refTitle=item.rowData
+                        item.rowData.map((item,index)=>{
+                            if (item=='id'){
+                                refIdIndex=index
+                            }
+                        })
+                    }else {
+                        if (item.rowData[refIdIndex]==refId){
+                            refDate=item.rowData
+                        }
+
+                    }
+                })
+            }
+        })
+        // console.log("refDate",refDate)
+        // console.log("refTitle",refTitle)
+        setFromNames(refTitle)
+        let showData={}
+        let showDataL=refTitle.length
+        refTitle.map((item,index)=>{
+            console.log(item)
+            if(index==0){
+                showData ='{'
+            }
+            showData=showData+'"'+item+'":'+'"'+refDate[index]+'"'
+            if (index<(showDataL-1)){
+                showData=showData+','
+            }
+            if(index==(showDataL-1)){
+                showData =showData+'}'
+            }
+        })
+        console.log(showData)
+        form.setFieldsValue(JSON.parse(showData))
+        setAddRecord(true)
+
+
+    }
+    const editColumns=(value)=>{
+        console.log(value)
+        setFromNames(editNameList)
+        setFromType("Edit")
+        let editData={}
+        let editNameL=editNameList.length
+        editNameList.map((item,index)=>{
+            if(index==0){
+                editData ='{'
+            }
+            editData=editData+'"'+item+'":'+'"'+value[item]+'"'
+            if (index<(editNameL-1)){
+                editData=editData+','
+            }
+            if(index==(editNameL-1)){
+                editData =editData+'}'
+            }
+        })
+        console.log(JSON.parse(editData))
+        form.setFieldsValue(JSON.parse(editData))
+
+        setAddRecord(true)
+    }
+    const onAddRecord=(value)=>{
+        console.log(value)
+        setFromNames(nameList)
+        setFromType("Add")
+        form.resetFields();
+        setAddRecord(true)
+    }
+
+    const changeRecordDate=(values)=>{
+        showType=values.key
+        getTableData()
+    }
+
+    const onChange = (id) =>{
+        // console.log(id)
+        viewId=id
+        getTableData()
+    }
 
 
     //定义模板
@@ -96,91 +252,90 @@ function AppDetail() {
                     <Menu
                         mode="inline"
                         style={{height: '100%', background: "#f5f5f5",}}
+                        defaultSelectedKeys="all"
                     >
                         <div>
-                            <Button type="text" icon={<DoubleLeftOutlined />} size="large" onClick={()=>navigate("/")}
+                            <Button type="text" icon={<DoubleLeftOutlined/>} size="large" onClick={() => navigate("/")}
                                     style={{marginLeft: "15px", marginTop: "50px"}}></Button>
                             <Button type="text" icon={<SaveOutlined/>} size="large"
                                     style={{marginLeft: "15px", marginTop: "10px"}}></Button>
-                            <Button type="text" icon={<DoubleRightOutlined />} size="large"
+                            <Button type="text" icon={<DoubleRightOutlined/>} size="large"
                                     style={{marginLeft: "15px", marginTop: "10px"}}></Button>
 
                         </div>
-                        <Menu.Item onClick={() => setAddRecord(true)}>
-                            Add record
+                        <Menu.Item disabled={allowedAction.indexOf("add") == -1} onClick={onAddRecord}>
+                            <EditOutlined style={{marginRight: "10px"}}/>Add record
                         </Menu.Item>
-                        <Menu.Item onClick={()=>setShowCheckBox(true)}>
-                            Delete record
+                        <Menu.Item key="all" onClick={changeRecordDate}>
+                            <BankOutlined style={{marginRight: "10px"}}/>All
                         </Menu.Item>
-
+                        <Menu.Item key="userFilter" onClick={changeRecordDate}>
+                            <UserOutlined  style={{marginRight: "10px"}}/>User filter
+                        </Menu.Item>
+                        <Menu.Item key="filter" onClick={changeRecordDate}>
+                            <ProfileOutlined style={{marginRight: "10px"}}/>Filter
+                        </Menu.Item>
                     </Menu>
                 </Sider>
                 <Content style={{marginTop: 30, marginLeft: 20, marginRight: 30}}>
-                    <Radio.Group size="large" defaultValue="apps" style={{marginBottom: 30}}>
-                        <Radio.Button value="apps" onClick={() => setShowElem(true)}>Apps</Radio.Button>
-                        <Radio.Button value="database" onClick={() => setShowElem(false)}>Database</Radio.Button>
-                    </Radio.Group>
-                    {showElem ?
-                        <Tabs
-                            defaultActiveKey="1"
-                            tabPosition="top"
-                            style={{height: 220}}
-                            items={views}/> : ''}
-                    <Modal
-                        title="Add record"
-                        centered
-                        open={addRecord}
-                        onOk={() => setAddRecord(false)}
-                        onCancel={() => setAddRecord(false)}
-                        width={400}
-                        okText="save"
-                    >
-                        <Form
-                            name="basic"
-                            initialValues={{remember: true}}
-                            autoComplete="off"
-                            layout="vertical"
-                        >
-                            <Form.Item
-                                label="Name"
-                                name="name"
-                                style={{maxWidth: "100%"}}
-                                rules={[{required: true, message: 'Please input your name!'}]}
-                            >
-                                <Input/>
-                            </Form.Item>
-
-                            <Form.Item
-                                label="Email"
-                                name="email"
-                                rules={[{required: true, message: 'Please input your email!'}]}
-                            >
-                                <Input/>
-                            </Form.Item>
-                            <Form.Item
-                                label="Phone Number"
-                                name="phone"
-                                rules={[{required: true, message: 'Please input your phone number!'}]}
-                            >
-                                <Input/>
-                            </Form.Item>
-                        </Form>
-                    </Modal>
+                    <Tabs
+                        defaultActiveKey="1"
+                        tabPosition="top"
+                        style={{height: 220}}
+                        onChange={onChange}
+                        items={viewStore.detailTabs.map(item=>{
+                            item={...item,children: children}
+                            return item
+                        })}/>
                 </Content>
             </Layout>
             <Modal
+                title={fromType+" record"}
+                centered
+                open={addRecord}
+                onOk={() => setAddRecord(false)}
+                onCancel={() => setAddRecord(false)}
+                width={400}
+                okText="save"
+                okButtonProps={{ disabled: fromType=="Show" }}
+            >
+                <Form
+                    name="basic"
+                    autoComplete="off"
+                    layout="vertical"
+                    form={form}
+                    disabled={fromType=="Show"}
+                >
+                    {fromNames.map((item,index)=>{
+                        return <Form.Item
+
+                            label={item}
+                            name={item}
+                            style={{maxWidth: "100%"}}
+                            rules={[{required: true, message: 'Please input your '+item+'!'}]}
+                        >
+                            <Input/>
+                        </Form.Item>
+                    })}
+
+                </Form>
+            </Modal>
+            <Modal
                 visible={showCheckBox}
-                title="Delete App"
+                title="Delete View"
                 okText="Submit"
-                onOk={() => setShowCheckBox(false)}
+                onOk={() => onDelete(recordId)}
                 onCancel={() => {
                     setShowCheckBox(false)
                 }}
                 destroyOnClose>
-                <p>Are you sure to delete it ?</p>
+                <p>Are you sure to delete {recordId} ?</p>
             </Modal>
         </div>
     );
 }
 
-export default AppDetail;
+export default observer(AppDetail);
+
+
+

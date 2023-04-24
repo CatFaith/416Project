@@ -14,7 +14,6 @@ const {Sider, Content} = Layout;
 const Apps = () => {
     //定义state参数
     const [showAppDialog, setShowAppDialog] = useState(false)
-    const [showElem, setShowElem] = useState(true)
     const [showAppType, setShowAppType] = useState("recent")
     const {appStore, userStore} = useStore()
     //调用app list方法
@@ -54,10 +53,6 @@ const Apps = () => {
                     </Menu>
                 </Sider>
                 <Content style={{margin: 30}}>
-                    <Radio.Group size="large" defaultValue="apps" style={{marginBottom: 30}}>
-                        <Radio.Button value="apps" onClick={() => setShowElem(true)}>Apps</Radio.Button>
-                        <Radio.Button value="database" onClick={() => setShowElem(false)}>Database</Radio.Button>
-                    </Radio.Group>{showElem ?
                     <Row>
                         {/*//当app list有数据的时候遍历生成AddCard组件*/}
                         {appStore.apps? appStore.apps.map(item => {
@@ -68,8 +63,7 @@ const Apps = () => {
                                 return <Col span={6} style={{marginBottom: 30}}><AddCard item={item}></AddCard> </Col>
                             }
                         }) : null}
-                    </Row> : ''
-                }
+                    </Row>
                 </Content>
             </Layout>
             {/*//调用弹出框组件*/}

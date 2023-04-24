@@ -9,6 +9,7 @@ import {
 class App {
     apps = []
     app = {}
+    authorization = false
     constructor() {
         makeAutoObservable(this)
     }
@@ -39,6 +40,10 @@ class App {
         googleAccount.appId=appId
         const res = await http.post('/api/app/shareApp', googleAccount)
         this.app = res
+    }
+    checkAuthorization= async (app) => {
+        const res = await http.post('/api/app/checkAuthorization', app)
+        this.authorization = res.data
     }
 
 }

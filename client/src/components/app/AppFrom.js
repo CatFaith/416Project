@@ -1,4 +1,4 @@
-import {Form, Input, message} from "antd";
+import {Form, Input, message, Switch} from "antd";
 import React from "react";
 import {useStore} from '@/stores'
 
@@ -11,8 +11,7 @@ const AppFrom = React.forwardRef((props, ref) => {
         appName: props.item.appName,
         roleMemberSheet: props.item.roleMemberSheet,
         savedDataUrl: props.item.savedDataUrl,
-        published:props.item.published,
-        developer: props.item.developer
+        published:props.item.published
     }:[]
     //定义提交方法
     async function onFinish(values) {
@@ -23,7 +22,6 @@ const AppFrom = React.forwardRef((props, ref) => {
         }else {
             await appStore.createApp(values)
         }
-
         if (appStore.app.code == 200) {
             //状态码为200的时候调用以下方法
             message.success('create success')
@@ -36,6 +34,7 @@ const AppFrom = React.forwardRef((props, ref) => {
             ref={ref}
             onFinish={onFinish}
             initialValues={item}
+            style={{margin: "30px 20px"}}
             layout="vertical">
             <Form.Item
                 label="appName"
@@ -61,21 +60,14 @@ const AppFrom = React.forwardRef((props, ref) => {
             >
                 <Input/>
             </Form.Item>
-            <Form.Item
-                label="published"
-                name="published"
-                rules={[{required: true, message: 'Please input your published!'}]}
-            >
-                <Input/>
-            </Form.Item>
-            <Form.Item
-                label="developer"
-                name="developer"
-                rules={[{required: true, message: 'Please input your developer!'}]}
-            >
-                <Input/>
+            <Form.Item label="published" name="published" valuePropName="checked">
+                <Switch />
             </Form.Item>
         </Form>
     );
 })
 export default AppFrom
+
+
+
+
