@@ -40,12 +40,13 @@ Object.keys(db).forEach(modelName => {
   }
 });
 
-db.sequelize = sequelize; // ？
-db.Sequelize = Sequelize; // ？
+db.sequelize = sequelize; //
+db.Sequelize = Sequelize; //
 
 db.app = require("./app.model")(sequelize, Sequelize);
 db.user = require("./user.model")(sequelize, Sequelize);
 db.view = require("./view.model")(sequelize, Sequelize);
+db.log = require("./log.model")(sequelize, Sequelize);
 
 
 module.exports = db;
