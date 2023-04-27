@@ -127,10 +127,10 @@ const AppDetail=()=> {
                                     dataItem =dataItem+'}'
                                 }
                         })
-                        //所有数据
+                        //table需要展示的所有数据
                         dataList.push({...JSON.parse(dataItem)})
                         let changeList =[]
-                        //userFilter为自己的数据
+                        //过滤出userFilter为自己的gmail的数据
                         if(showType=="userFilter"){
                             dataList.map((item)=>{
                                 if(item.createBy.toString() ==userStore.gmail.toString()){
@@ -139,7 +139,7 @@ const AppDetail=()=> {
                             })
                             dataList = changeList
                         }
-                        //filter为true的数据
+                        //过滤出filter为true的数据
                         if (showType=="filter"){
                             dataList.map((item)=>{
                                 if(item.filter.toString() =="TRUE"){
@@ -152,9 +152,11 @@ const AppDetail=()=> {
                 })
             }
         })
-        //数据不为空时添加操作列
+        //当table数据不为空时根据allowedAction的数据添加删除或者修改操作列
         if (dataList.length!=0){
+            //设置teble数据
             setDataList([...dataList])
+            //设置table的title
             setColumns([...columns,{
                 title: 'Action',
                 dataIndex: '',
@@ -162,6 +164,7 @@ const AppDetail=()=> {
                 render:(_, record: { key: React.Key }) =>
                     dataList.length >= 1 ? (
                         <div>
+                            {/*通过allowedAction可以来判断是否有权限修改和删除*/}
                             <a hidden={allowedAction.indexOf("edit") == -1} onClick={() => editColumns(record)} style={{marginRight: "10px"}}>Edit</a>
                             <a hidden={allowedAction.indexOf("delete") != -1} onClick={() => deleteColumns(record.key)}>Delete</a>
                         </div>
@@ -169,18 +172,19 @@ const AppDetail=()=> {
             }])
         }
     }
-
+    //调用后端方法获取页面所有数据
     useEffect(() => {
         viewStore.getViewForGoogleSheet(appId).then(()=>{
             getTableData()
         })
     }, viewStore)
 
+    //定义table标签在Tabs里引用，columns为teble数据，dataList为table的title
     const children =  <Table columns={columns} dataSource={dataList}/>
-
 
     //根据筛选条件展示数据
     const changeRecordDate=(values)=>{
+        //设置showType的类型，在getTableData（）方法里根据showType过滤table的数据
         showType=values.key
         getTableData()
     }
@@ -188,6 +192,7 @@ const AppDetail=()=> {
     //切换view页面
     const onChange = (id) =>{
         console.log("viewId",id)
+        //设置viewId，在getTableData（）方法里根据viewId过滤table的数据
         viewId=id
         getTableData()
     }
@@ -295,6 +300,7 @@ const AppDetail=()=> {
             console.log(viewId)
             console.log(values)
             console.log({id:viewId,rowData:values})
+            //通过判断fromType类型调用不同的方法
             if (fromType=="Add"){
                 viewStore.addRecordToGoogleSheet({id:viewId,rowData:values}).then((res)=>{
                     if (res.code==200){
@@ -302,6 +308,7 @@ const AppDetail=()=> {
                         viewStore.getViewForGoogleSheet(appId).then(()=>{
                             getTableData()
                         })
+                        //关闭弹出框
                         setAddRecord(false)
                     }
                     if (res.code==500){
@@ -317,6 +324,7 @@ const AppDetail=()=> {
                         viewStore.getViewForGoogleSheet(appId).then(()=>{
                             getTableData()
                         })
+                        //关闭弹出框
                         setAddRecord(false)
                     }
                     if (res.code==500){
@@ -375,6 +383,7 @@ const AppDetail=()=> {
                                      onClick={onAddRecord}
                                      icon={<EditOutlined/>}
                                      shape="round"
+                                     // 根据allowedAction的值判断该用户是否有权限添加行数据
                                      disabled={allowedAction.indexOf("add") == -1}
                                      size="large"
                                      style={{marginLeft: 20, marginTop: 35,marginBottom:15}}>
@@ -401,6 +410,7 @@ const AppDetail=()=> {
                         tabPosition="top"
                         style={{height: 220}}
                         onChange={onChange}
+                        // 遍历出所有view名称展示到tab，children为table
                         items={viewStore.detailTabs.map(item=>{
                             item={...item,children: children}
                             return item
@@ -410,18 +420,22 @@ const AppDetail=()=> {
             <Modal
                 title={fromType+" record"}
                 centered
+                //通过addRecord参数控制modal的开关
                 open={addRecord}
                 onOk={saveRecord}
                 onCancel={() => setAddRecord(false)}
                 width={400}
                 okText="save"
+                //当为ref展示的时候禁用提交按钮
                 okButtonProps={{ disabled: fromType=="Show" }}
             >
                 <Form
                     name="basic"
                     autoComplete="off"
                     layout="vertical"
+                    //绑定form，通过form调用from表单相关方法
                     form={form}
+                    //当为ref展示的时候禁用表单修改功能
                     disabled={fromType=="Show"}
                 >
                     {fromNames.map((item,index)=>{
@@ -430,11 +444,12 @@ const AppDetail=()=> {
                         return <Form.Item
                             label={item}
                             name={item}
+                            // 当item为key时隐藏该列数据
                             hidden={item=="key"}
                             style={{maxWidth: "100%"}}
                             rules={[{required: true, message: 'Please input your '+item+'!'}]}>
                             {
-                                // filter和editable用下拉选择框展示
+                                // filter和editable用下拉选择框展示，其余用input
                                 item!= "filter" && item!= "editable"?
                                     <Input placeholder={"Please input your "+item}/>:
                                     <Select placeholder={"Please select your"+item}
