@@ -15,7 +15,7 @@ class App {
     }
     // 获取app list
     getApps = async () => {
-        const res = await http.post('/api/app/getApp')
+        const res = await http.post('/api/app/getAppAfterLogin')
         this.apps = res.data
     }
     // 创建app
@@ -43,9 +43,17 @@ class App {
     }
     checkAuthorization= async (app) => {
         const res = await http.post('/api/app/checkAuthorization', app)
-        this.authorization = res.data
+        this.authorization = res
     }
 
 }
 
 export default App
+
+
+
+
+
+
+
+

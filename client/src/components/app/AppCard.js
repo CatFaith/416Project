@@ -26,10 +26,11 @@ const AddCard = (props) => {
 
     const isHasPermission=(url)=>{
         appStore.checkAuthorization(props.item).then(()=>{
-            if (appStore.authorization){
+            if (appStore.authorization.code==200){
                 navigate(url);
-            }else {
-                message.warning('No Permission')
+            }
+            if(appStore.authorization.code==500){
+                message.warning(appStore.authorization.data)
             }
         })
     }
