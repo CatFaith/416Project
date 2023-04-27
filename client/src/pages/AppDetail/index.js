@@ -36,24 +36,30 @@ const AppDetail=()=> {
     let [columns,setColumns]=useState([])
     let viewId=null
     let showType="all"
+
     const getTableData=()=>{
         console.log("showType",showType)
+
         dataList=[]
         setDataList(dataList=[])
+
         columns=[]
         setColumns([])
+        
         viewStore.detailData.map((item,index)=>{
             if(viewId==null? index==0:item.id==viewId){
                 viewId=item.id
                 item.reference.map((item,index)=>{
                     referenceList.push(item[0])
                 })
+
                 reference=item.reference
                 setReference(reference)
                 allowedAction=item.allowedAction
                 setAllowedAction(allowedAction)
                 editNameList=item.editableColumns
                 setEditNameList(editNameList)
+                
                 item.viewData.map((item,index)=>{
                     if (index==0){
                         nameList =item.rowData
