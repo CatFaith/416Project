@@ -23,8 +23,8 @@ const ShareAppFrom = React.forwardRef((props, ref) => {
             >
                 <Select mode="multiple" placeholder="Please select googleAccount">
                     {/*获取勾选的被分享谷歌账户信息*/}
-                    {userStore.userList.map(item=>{
-                        return   <Option value={item.googleAccount}>{item.googleAccount}</Option>
+                    {userStore.userList.map((item,index)=>{
+                        return   <Option key={index} value={item.googleAccount}>{item.googleAccount}</Option>
                     })}
                 </Select>
             </Form.Item>

@@ -1,32 +1,50 @@
 import {Button, Col, Menu, message, Modal, Popover, Row} from "antd";
 import {DeleteOutlined, EditOutlined, FileTextOutlined, MoreOutlined, PlusOutlined} from "@ant-design/icons";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import ViewDialog from "@/components/view/ViewDialog";
 import {useStore} from "@/stores";
-
+import {useNavigate, useParams} from "react-router-dom";
+import {observer} from 'mobx-react-lite'
 
 const ViewMenus = (props) => {
     const {viewStore} = useStore()
     const [showViewDialog, setShowViewDialog] = useState(false)
     const [operationType, setOperationType] = useState("create")
-    const [showCheckBox, setShowCheckBox] = useState(false)
     const [view, setView] = useState([])
+    const [showCheckBox, setShowCheckBox] = useState(false)
+    const navigate = useNavigate();
+    const appId=useParams().appId
     const closeViewDialog = () => {
         setShowViewDialog(false)
     }
+    const [selectedKeys,setSelectedKeys]=useState("")
+
+    useEffect(() => {
+        viewStore.getViews(appId).then(()=>{
+            setSelectedKeys(JSON.parse(JSON.stringify(viewStore.views[0])).id.toString())
+        })
+    }, viewStore)
     const onDelete = async (id) => {
         await viewStore.deleteView(id)
         if (viewStore.view.code == 200) {
             message.success('Delete success')
+            viewStore.getViews(appId).then()
+            setShowCheckBox(false)
+            setSelectedKeys(JSON.parse(JSON.stringify(viewStore.views[0])).id.toString())
         }
-        window.location.reload()
-
     }
+    const goView = (id) =>{
+        // navigate("/"+appId+"/views?id="+id);
+        setSelectedKeys(id.toString())
+        props.getViewMenusId(id)
+    }
+
     //左侧菜单模板设置
     return (
         <Menu
             mode="inline"
             style={{height: '100%', background: "#f5f5f5"}}
+            selectedKeys={[selectedKeys]}
         >
             <Menu.Item disabled="true" style={{fontSize: "larger"}}>
                 App Edit
@@ -53,13 +71,13 @@ const ViewMenus = (props) => {
                 ></ViewDialog>
             </Menu.Item>
             {/*遍历view list获取菜单值*/}
-            {props.hasViews ? viewStore.views.map(item => {
-                return <Menu.Item>
-                    <Row>
-                        <Col span={3} offset={1} style={{}}>
+            {viewStore.views.length > 0 ? viewStore.views.map((item,index) => {
+                return <Menu.Item key={item.id} onClick={()=>goView(item.id)}>
+                    <Row >
+                        <Col span={3} offset={1} >
                             <FileTextOutlined/>
                         </Col>
-                        <Col span={17} style={{}}>
+                        <Col span={17}  onClick={()=>goView(item.id)}>
                             {item.viewName}
                         </Col>
                         <Col span={3} offset={0}>
@@ -83,24 +101,16 @@ const ViewMenus = (props) => {
                                             <Button type="text"
                                                     size="middle"
                                                     disabled={showViewDialog||showCheckBox}
-                                                    onClick={() => setShowCheckBox(true)}><DeleteOutlined/>Delete</Button>
+                                                    onClick={() => {
+                                                        setShowCheckBox(true);
+                                                        setView(item);
+                                                    }}><DeleteOutlined/>Delete</Button>
                                         </div>
                                     </div>}>
                                 <MoreOutlined key="ellipsis"/>
                             </Popover>
                         </Col>
                     </Row>
-                    <Modal
-                        visible={showCheckBox}
-                        title="Delete View"
-                        okText="Submit"
-                        onOk={() => onDelete(item)}
-                        onCancel={() => {
-                            setShowCheckBox(false)
-                        }}
-                        destroyOnClose>
-                        <p>Are you sure to delete {item.viewName} ?</p>
-                    </Modal>
                 </Menu.Item>
             }) : null}
 
@@ -112,10 +122,22 @@ const ViewMenus = (props) => {
                 operationType={operationType}
                 visible={showViewDialog}
                 close={closeViewDialog}
+                viewType="view"
             ></ViewDialog>
+            <Modal
+                visible={showCheckBox}
+                title="Delete View"
+                okText="Submit"
+                onOk={() => onDelete(view)}
+                onCancel={() => {
+                    setShowCheckBox(false)
+                }}
+                destroyOnClose>
+                <p>Are you sure to delete {view.viewName} ?</p>
+            </Modal>
         </Menu>
 
 
     );
 }
-export default ViewMenus
+export default observer(ViewMenus)

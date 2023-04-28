@@ -9,12 +9,13 @@ import {
 class App {
     apps = []
     app = {}
+    authorization = false
     constructor() {
         makeAutoObservable(this)
     }
     // 获取app list
     getApps = async () => {
-        const res = await http.post('/api/app/getApp')
+        const res = await http.post('/api/app/getAppAfterLogin')
         this.apps = res.data
     }
     // 创建app
@@ -40,7 +41,19 @@ class App {
         const res = await http.post('/api/app/shareApp', googleAccount)
         this.app = res
     }
+    checkAuthorization= async (app) => {
+        const res = await http.post('/api/app/checkAuthorization', app)
+        this.authorization = res
+    }
 
 }
 
 export default App
+
+
+
+
+
+
+
+
