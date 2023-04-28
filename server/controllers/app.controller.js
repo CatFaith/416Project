@@ -1,12 +1,12 @@
 const db = require("../models");
 const App = db.app;
+const View = db.view;
 const Op = db.Op;
 const {addLog} = require("./log.controller")
 const EMUN = require("../utils/emun")
 const {getUserByGoogleAccount} = require("./user.controller");
 const {sendResultResponse} = require("../utils/responseFrom");
-const {getGoogleSheetAuthorization} = require("../utils/googleSheet");
-// const {getViewByAppId} = require("./view.controller");
+const {getGoogleSheetAuthorization, getGoogleSheetsData} = require("../utils/googleSheet");
 
 /**
  * req.user.id is obtained by the calling interface after the token in the request header is resolved.
@@ -99,32 +99,6 @@ exports.getApp = async (req, res) => {
     }
 };
 
-// /**
-//  * 根据appId查询所有的APP数据，返回给前端进行渲染及缓存
-//  * @param req
-//  * @param res
-//  * @returns {Promise<void>}
-//  */
-// exports.getAppDetailById = async (req, res) => {
-//     const user = req.user;
-//     const app = req.body;
-//     // 1，根据appId查询所有的view
-//     const viewData = await getViewByAppId(app.id)
-//     if (viewData != null) {
-//         // 2，根据view中的saveDataURL从google sheet获取表格第六行开始至末尾的数据
-//         for (const view of viewData){
-//             //循环viewData，其中dataValues属性才是真正的数据
-//
-//         }
-//         // 3，根据app的role member sheet查出当前登录账号属于哪个role。
-//
-//         // 4，查询view表MySQL数据库，查出所有的角色信息。判断第3步的role具有什么权限？？可见列有哪些？？
-//
-//         // 5，根据第四步返回的数据，组装数据返回给前端，此处要用循环，因为一个app下有多个view，每一个view都需要组装
-//
-//     }
-// };
-
 /**
  * 登录后获取有权限的APP
  * @param req
@@ -165,6 +139,25 @@ exports.getAppAfterLogin = async (req, res) => {
  * @param res
  * @returns true/false
  */
+exports.checkAuthorizationMethod = async (roleMemberSheet, googleAccount) => {
+    //1，调用google sheet获取数据
+    const result = await getGoogleSheetAuthorization(roleMemberSheet)
+    if (result != null){
+        //2，根据返回的数据，判断是否有权限
+        if (result.toString().indexOf(googleAccount) != -1){
+            return true
+        }else {
+            return false
+        }
+    }
+};
+
+/**
+ * 每次打开/修改/分享/删除app前都判断权限
+ * @param req
+ * @param res
+ * @returns true/false
+ */
 exports.checkAuthorization = async (req, res) => {
     const user = req.user;
     const googleAccount = user.googleAccount;
@@ -175,12 +168,142 @@ exports.checkAuthorization = async (req, res) => {
     if (result != null){
         //3，根据返回的数据，判断是否有权限
         if (result.toString().indexOf(googleAccount) != -1){
-            res.json(sendResultResponse(true, 200, process.env[EMUN.SYSTEM_SUCCESS]))
+            //判断到有权限以后，调用方法判断googlesheet的列和MySQL的列是否一致
+            const message = await checkGoogleColumnWithMySql(app.id, app.googleAccount)
+            if (message == null){
+                res.json(sendResultResponse(true, 200, process.env[EMUN.SYSTEM_SUCCESS]))
+            }else {
+                res.json(sendResultResponse(message, 500, process.env[EMUN.SYSTEM_FAIL]))
+            }
         }else {
-            res.json(sendResultResponse(false, 200, process.env[EMUN.SYSTEM_SUCCESS]))
+            res.json(sendResultResponse('No Permission', 500, process.env[EMUN.SYSTEM_FAIL]))
         }
     }
 };
+
+/**
+ * 根据appId查询所有的view数据
+ * @param appId
+ * @returns {Promise<returnData|null>}
+ */
+getViewByAppId = async (appId) => {
+    //根据appId查询所有的view
+    const viewData = await View.findAll({where: {appId: appId,viewType: EMUN.TABLE}})
+    if (viewData != null) {
+        let returnData = []
+        for (const view of viewData){
+            //循环viewData，其中dataValues属性才是真正的数据
+            returnData.push(view.dataValues)
+        }
+        return returnData
+    } else {
+        return null
+    }
+};
+
+/**
+ * 每次打开app前都判断app中所有view数据的Column与googlesheet中的column是否一致
+ * 一致的话就代表用户没修改过，然后才能打开app
+ * 不一致的话就弹出error提示，不能打开app，并记录到Log表
+ * @param req
+ * @param res
+ * @returns true/false
+ */
+checkGoogleColumnWithMySql = async (appId, googleAccount) => {
+    //1，点击app时，根据app的Id，查出所有的view数据
+    const views = await getViewByAppId(appId)
+    if (views != null) {
+        //循环遍历
+        let message = null
+        for (const view of views) {
+            let mysqlColumns = ['id', 'createBy', 'filter', 'editable']
+            if (view.columns != null && view.columns != '') {
+                const viewColumns = view.columns.split(',')
+                for (const column of viewColumns) {
+                    mysqlColumns.push(column)
+                }
+                //2，调用google sheet获取sheet的数据，拿出sheet的列信息
+                const urlArr = []
+                urlArr.push(view.savedDataUrl)
+                //4，根据view的saveDataURL字段获取google sheet的数据
+                const result = await getGoogleSheetsData(urlArr)
+                // 此处的googleSheetView默认是一个，因为只传一个URL去查询
+                for (const googleSheetView of result) {
+                    const googleSheetColumns = googleSheetView.headerValues
+                    for (let i = 0; i < googleSheetColumns.length; i++) {
+                        if (googleSheetColumns[i] != mysqlColumns[i]) {
+                            //弹出error msg ，提示用户，并存储到Log日志表中
+                            message = view.viewName + '：列信息不匹配'
+                            //添加日志记录
+                            addLog(EMUN.ERROR, EMUN.APP, 'checkGoogleColumnWithMySql', message, googleAccount)
+                        }
+                    }
+                }
+                if (message != null) {
+                    break;
+                }
+            }
+        }
+        return message
+    }
+};
+
+
+// /**
+//  * 每次打开app前都判断app中所有view数据的Column与googlesheet中的column是否一致
+//  * 一致的话就代表用户没修改过，然后才能打开app
+//  * 不一致的话就弹出error提示，不能打开app，并记录到Log表
+//  * @param req
+//  * @param res
+//  * @returns true/false
+//  */
+// exports.checkGoogleColumnWithMySql = async (req, res) => {
+//     //1，点击app时，根据app的Id，查出所有的view数据
+//     const app = req.body;
+//     const views = await getViewByAppId(app.appId)
+//     if (views != null){
+//         //循环遍历
+//         let message = null
+//         for (const view of views){
+//             let mysqlColumns = []
+//             mysqlColumns = ['id', 'createBy', 'filter', 'editable']
+//             if (view.columns != null && view.columns != ''){
+//                 const viewColumns = view.columns.split(',')
+//                 for (const column of viewColumns){
+//                     mysqlColumns.push(column)
+//                 }
+//                 //2，调用google sheet获取sheet的数据，拿出sheet的列信息
+//                 const urlArr = []
+//                 urlArr.push(view.savedDataUrl)
+//                 //4，根据view的saveDataURL字段获取google sheet的数据
+//                 const result = await getGoogleSheetsData(urlArr)
+//                 // 此处的googleSheetView默认是一个，因为只传一个URL去查询
+//                 for (const googleSheetView of result){
+//                     const googleSheetColumns = googleSheetView.headerValues
+//                     for (let i = 0; i < googleSheetColumns.length; i++){
+//                         if (googleSheetColumns[i] != mysqlColumns[i]){
+//                             //弹出error msg ，提示用户，并存储到Log日志表中
+//                             message = view.viewName + '：列信息不匹配'
+//                             //添加日志记录
+//                             addLog(EMUN.ERROR, EMUN.APP, 'checkGoogleColumnWithMySql', '', googleAccount)
+//                         }
+//                     }
+//                 }
+//             }
+//             if (message != null) {
+//                 break;
+//             }
+//         }
+//         // 3，比对view的columns字段和查询google sheet返回的column名字是否一致，如果一致，才可以继续下一步
+//         //message == null代表的是googlesheet的列和MySQL的列是一致的，则返回true
+//         if (message == null){
+//             res.json(sendResultResponse(true, 200, process.env[EMUN.SYSTEM_SUCCESS]))
+//         }else {
+//             res.json(sendResultResponse(message, 500, process.env[EMUN.SYSTEM_FAIL]))
+//         }
+//     }
+// };
+
 
 /**
  * Gets the creator id of the APP based on the APP primary key

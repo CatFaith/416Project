@@ -2,9 +2,9 @@ const db = require("../models");
 const View = db.view;
 const {addLog} = require("./log.controller");
 const EMUN = require("../utils/emun")
-const {getAppByPk, getAppEntityByPk} = require("./app.controller");
+const {getAppEntityByPk, checkAuthorizationMethod} = require("./app.controller");
 const {sendResultResponse} = require("../utils/responseFrom")
-const {getGoogleSheetsData, addViewSheet, deleteViewSheet, editSheetData, addSheetData, deleteSheetData, getGoogleSheetAuthorization} = require("../utils/googleSheet");
+const {getGoogleSheetsData, addViewSheet, deleteViewSheet, editSheetData, addSheetData, deleteSheetData, getGoogleSheetAuthorization, editSheetDataByRowNum} = require("../utils/googleSheet");
 
 /**
  * req.user.id is obtained by the calling interface after the token in the request header is resolved.
@@ -70,13 +70,6 @@ exports.addView = async (req, res) => {
         addLog(EMUN.ERROR, EMUN.VIEW, 'addView', err, req.user.googleAccount)
         res.json(sendResultResponse(err, 500, process.env[EMUN.SYSTEM_FAIL]))
     })
-    // if (userId == req.user.id) {
-    //
-    // } else {
-    //     //添加日志记录
-    //     addLog(EMUN.ERROR, EMUN.VIEW, 'addView', process.env[EMUN.TOKEN_ERROR_MSG], req.user.googleAccount)
-    //     res.json({result: process.env[EMUN.TOKEN_ERROR_MSG]})
-    // }
 };
 
 /**
@@ -105,12 +98,6 @@ exports.deleteView = async (req, res) => {
     await deleteViewSheet(viewData.savedDataUrl)
     //添加日志记录
     addLog(EMUN.GOOGLE_SHEET, EMUN.VIEW, 'deleteView', 'delete sheet', req.user.googleAccount)
-    // if (userId == req.user.id) {
-    // } else {
-    //     //添加日志记录
-    //     addLog(EMUN.ERROR, EMUN.VIEW, 'deleteView', process.env[EMUN.TOKEN_ERROR_MSG], req.user.googleAccount)
-    //     res.json(sendResultResponse('', 500, process.env[EMUN.TOKEN_ERROR_MSG]))
-    // }
 };
 
 /**
@@ -141,8 +128,6 @@ exports.getViewById = async (req, res) => {
     const view = req.body;
     //APP点击查看view，需要根据appid查询当前APP下所有关联的view
     await View.findAll({where: {id: view.id,}}).then(data => {
-        // data.nameData=[["columns0","name0","type0","label0"],["columns1","name1","type1","label1"]]
-        // data.obg={columns0: "a",name0: "222" ,type0: [ "reference", "sheet1" ],label0: "false",columns1: "a",name1: "222" ,type1: [ "reference", "sheet1" ],label1: "false"}
         res.json(sendResultResponse(data, 200, process.env[EMUN.SYSTEM_SUCCESS]))
     }).catch(err => {
         //添加日志记录
@@ -204,12 +189,6 @@ exports.editView = async (req, res) => {
         addLog(EMUN.ERROR, EMUN.VIEW, 'editView', err, req.user.googleAccount)
         res.json(sendResultResponse(err, 500, process.env[EMUN.SYSTEM_FAIL]))
     });
-    // if (userId == req.user.id) {
-    // } else {
-    //     //添加日志记录
-    //     addLog(EMUN.ERROR, EMUN.VIEW, 'editView', process.env[EMUN.TOKEN_ERROR_MSG], req.user.googleAccount)
-    //     res.json({result: process.env[EMUN.TOKEN_ERROR_MSG]})
-    // }
 };
 
 /**
@@ -315,10 +294,16 @@ assembleRowData = async (googleSheetView, roleActionFrom) => {
             }
         }
     }
+    //列顺序升序，保持和googlesheet中的列顺序一致
+    columnsIndex.sort(function(a, b) {
+        return a - b;
+    });
     if (columnsIndex.length != 0){
         //组合数据返回给前端
         //前四列是固定的，分别是:id,createBy,filter,editable
         const rowColumns = []
+        //首先先添加行号到第0个袁术
+        rowColumns.push('rowNum')
         for (let i = 0;i < 4; i++){
             rowColumns.push(header[i])
         }
@@ -326,7 +311,7 @@ assembleRowData = async (googleSheetView, roleActionFrom) => {
             rowColumns.push(header[index])
         }
         const data = {
-            rowNum: 1,
+            // rowNum: 1,
             rowData: rowColumns
         }
         //rowNum: 1，为标题列
@@ -335,8 +320,13 @@ assembleRowData = async (googleSheetView, roleActionFrom) => {
         if (googleSheetView.rowData.length > 0){
             //要大于5是因为google sheet真正的数据时从第六行开始
             const rows = googleSheetView.rowData
+            const rowNumData = googleSheetView.rowNumData
+            //rows和rowNumData的length是一致的
+            let rowNumIndex = 0;
             for (const row of rows){
                 const rowData = []
+                //第一先添加行号
+                rowData.push(rowNumData[rowNumIndex])
                 for (let i = 0;i < 4; i++){
                     rowData.push(row[i])
                 }
@@ -344,10 +334,11 @@ assembleRowData = async (googleSheetView, roleActionFrom) => {
                     rowData.push(row[index])
                 }
                 const data = {
-                    rowNum: row[0],
+                    // rowNum: rowNumData[rowNumIndex],
                     rowData: rowData
                 }
                 returnData.push(data)
+                rowNumIndex++
             }
         }
     }
@@ -392,21 +383,6 @@ exports.getViewForGoogleSheet = async (req, res) => {
             urlArr.push(view.savedDataUrl)
             //4，根据view的saveDataURL字段获取google sheet的数据
             const result = await getGoogleSheetsData(urlArr)
-            // const result = [{"title": "course","headerValues": ["id","createBy","filter","editable","studentId","course","score"],"initialValue": ["\"\"","\"\"",
-            //         "\"\"","\"\"","\"\"","\"\"","\"\""],"label": ["FALSE","FALSE","FALSE","FALSE","TRUE","FALSE","FALSE"],"reference": [
-            //         "FALSE","FALSE","FALSE","FALSE","student","FALSE","FALSE"],"type": ["text","text","boolean","boolean","text","text","Number"],
-            //     "rowData": [["6","Er1c@gmail.com","FALSE","TRUE","6","English","90"],["7","Jun@gmail.com","FALSE","TRUE","7","organism","91"],
-            //         ["8","Jun@gmail.com","FALSE","TRUE","8","chemistry","92"],["9","Jun@gmail.com","TRUE","FALSE","9","physics","93"],
-            //         ["10","Er1c@gmail.com","TRUE","FALSE","10","history","94"],["11","Er1c@gmail.com","TRUE","FALSE","11","mathematics","95"]]}
-            //     // ,{"title": "student","headerValues": ["id","createBy","filter","editable","name","email","age","phone"],"initialValue": ["\"\"","\"\"",
-            //     //     "\"\"","\"\"","\"\"","\"\"","\"\"","\"\""],"label": ["FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE"],
-            //     // "reference": ["FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE"],"type": ["text","text","boolean","boolean","text",
-            //     //     "text","Number","text"],"rowData": [["6","Er1c@gmail.com","FALSE","TRUE","name1","1@gmail.com","20","13567875432"],["7","Jun@gmail.com",
-            //     //     "FALSE","TRUE","name2","2@gmail.com","21","13567875433"],["8","Jun@gmail.com","FALSE","TRUE","name3","3@gmail.com","22","13567875434"],
-            //     //     ["9","Jun@gmail.com","TRUE","FALSE","name4","4@gmail.com","23","13567875435"],["10","Er1c@gmail.com","TRUE","FALSE","name5","5@gmail.com","24",
-            //     //         "13567875436"],["11","Er1c@gmail.com","TRUE","FALSE","name6","6@gmail.com","25","13567875437"]]
-            //     // }
-            // ]
             for (const googleSheetView of result){
                 //5，组装返回的行数据
                 const data = await assembleRowData(googleSheetView, roleActionFrom)
@@ -490,21 +466,6 @@ exports.getViewColumnsByAppId = async (req, res) => {
             urlArr.push(view.savedDataUrl)
             //4，根据view的saveDataURL字段获取google sheet的数据
             const result = await getGoogleSheetsData(urlArr)
-            // const result = [{"title": "course","headerValues": ["id","createBy","filter","editable","studentId","course","score"],"initialValue": ["\"\"","\"\"",
-            //         "\"\"","\"\"","\"\"","\"\"","\"\""],"label": ["FALSE","FALSE","FALSE","FALSE","TRUE","FALSE","FALSE"],"reference": [
-            //         "FALSE","FALSE","FALSE","FALSE","student","FALSE","FALSE"],"type": ["text","text","boolean","boolean","text","text","Number"],
-            //     "rowData": [["6","Er1c@gmail.com","FALSE","TRUE","6","English","90"],["7","Jun@gmail.com","FALSE","TRUE","7","organism","91"],
-            //         ["8","Jun@gmail.com","FALSE","TRUE","8","chemistry","92"],["9","Jun@gmail.com","TRUE","FALSE","9","physics","93"],
-            //         ["10","Er1c@gmail.com","TRUE","FALSE","10","history","94"],["11","Er1c@gmail.com","TRUE","FALSE","11","mathematics","95"]]}
-            //     // ,{"title": "student","headerValues": ["id","createBy","filter","editable","name","email","age","phone"],"initialValue": ["\"\"","\"\"",
-            //     //     "\"\"","\"\"","\"\"","\"\"","\"\"","\"\""],"label": ["FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE"],
-            //     // "reference": ["FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE"],"type": ["text","text","boolean","boolean","text",
-            //     //     "text","Number","text"],"rowData": [["6","Er1c@gmail.com","FALSE","TRUE","name1","1@gmail.com","20","13567875432"],["7","Jun@gmail.com",
-            //     //     "FALSE","TRUE","name2","2@gmail.com","21","13567875433"],["8","Jun@gmail.com","FALSE","TRUE","name3","3@gmail.com","22","13567875434"],
-            //     //     ["9","Jun@gmail.com","TRUE","FALSE","name4","4@gmail.com","23","13567875435"],["10","Er1c@gmail.com","TRUE","FALSE","name5","5@gmail.com","24",
-            //     //         "13567875436"],["11","Er1c@gmail.com","TRUE","FALSE","name6","6@gmail.com","25","13567875437"]]
-            //     // }
-            // ]
             for (const googleSheetView of result){
                 //5，组装返回的行数据
                 const columnData = await assembleColumnData(googleSheetView)
@@ -512,6 +473,7 @@ exports.getViewColumnsByAppId = async (req, res) => {
                 const nameList = []
                 let type = ''
                 let columnsItem = {}
+                //拼装成前端所需要的结构，其中Type拼装的是reference属性，如果是reference属性的话，则会['reference','XXXX']的格式返回
                 columnData.map((item,index)=>{
                     nameList.push(["columns"+index,"name"+index,"type"+index,"label"+index])
                     type= item[2].length!=2?item[2]:item[2][0]+'","'+item[2][1]
@@ -650,6 +612,7 @@ exports.editOrAddViewColumn = async (req, res) => {
     for (const name of nameArr){
         googleSheetColumns.push(viewColunms[name])
     }
+    // 设置新的表头
     // rowNum.push(0)
     updateData.push(googleSheetColumns)
     for (const label of labelArr){
@@ -691,14 +654,21 @@ exports.editOrAddViewColumn = async (req, res) => {
 exports.addViewToGoogleSheet = async (req, res) => {
     //1,根据appid，查出当前APP的savedDataUrl
     const view = req.body;
-    const app = await getAppEntityByPk(view)
-    if (app != null){
-        //2，根据APP的saveDataURL来创建出一个新的sheet
-        const result = await addViewSheet(app.savedDataUrl, view.viewName)
-        //3，展示数据
-        res.json(sendResultResponse(true, 200, process.env[EMUN.SYSTEM_SUCCESS]))
+    const queryView = await View.findByPk(view.id)
+    if (await checkAuthorizationMethod(queryView.dataValues.roleMemberSheet, queryView.dataValues.googleAccount)){
+        const app = await getAppEntityByPk(view)
+        if (app != null){
+            //2，根据APP的saveDataURL来创建出一个新的sheet
+            const result = await addViewSheet(app.savedDataUrl, view.viewName)
+            //添加日志记录
+            addLog(EMUN.GOOGLE_SHEET, EMUN.VIEW, 'editOrAddViewColumn', updateData.toString(), req.user.googleAccount)
+            //3，展示数据
+            res.json(sendResultResponse(true, 200, process.env[EMUN.SYSTEM_SUCCESS]))
+        }else {
+            res.json(sendResultResponse(false, 200, process.env[EMUN.SYSTEM_SUCCESS]))
+        }
     }else {
-        res.json(sendResultResponse(false, 200, process.env[EMUN.SYSTEM_SUCCESS]))
+        res.json(sendResultResponse('No Permission', 500, process.env[EMUN.SYSTEM_FAIL]))
     }
 };
 
@@ -709,15 +679,23 @@ exports.addViewToGoogleSheet = async (req, res) => {
  * @returns google sheet data
  */
 exports.addRecordToGoogleSheet = async (req, res) => {
-    //1,根据appid，查出当前APP下所有的view
-    const data = req.body;
-    if (data != null){
-        //2，根据view的saveDataURL字段去新增google sheet的数据
-        const result = await addSheetData(data.savedDataUrl, JSON.parse(JSON.stringify(data.rowData)))
-        //3，展示数据
-        res.json(sendResultResponse(true, 200, process.env[EMUN.SYSTEM_SUCCESS]))
+    //1,根据viewId查出view的信息，取出savedDataUrl
+    const view = req.body;
+    const queryView = await View.findByPk(view.id)
+    const app = await getAppEntityByPk(queryView.dataValues)
+    if (await checkAuthorizationMethod(app.dataValues.roleMemberSheet, app.dataValues.googleAccount)){
+        if (view != null){
+            //2，根据view的saveDataURL字段去新增google sheet的数据
+            await addSheetData(queryView.dataValues.savedDataUrl, JSON.parse(JSON.stringify(view.rowData)), req.user.googleAccount)
+            //3，展示数据
+            res.json(sendResultResponse(true, 200, process.env[EMUN.SYSTEM_SUCCESS]))
+        }else {
+            res.json(sendResultResponse(false, 500, process.env[EMUN.SYSTEM_FAIL]))
+        }
+        //添加日志记录
+        addLog(EMUN.GOOGLE_SHEET, EMUN.VIEW, 'addRecordToGoogleSheet', view.id + '=>' + view.rowData, req.user.googleAccount)
     }else {
-        res.json(sendResultResponse(false, 500, process.env[EMUN.SYSTEM_FAIL]))
+        res.json(sendResultResponse('No Permission', 500, process.env[EMUN.SYSTEM_FAIL]))
     }
 };
 
@@ -728,16 +706,25 @@ exports.addRecordToGoogleSheet = async (req, res) => {
  * @returns google sheet data
  */
 exports.editRecordToGoogleSheet = async (req, res) => {
-    //1,根据appid，查出当前APP下所有的view
-    const data = req.body;
-    if (data != null){
-        //2，根据view的saveDataURL字段获取google sheet的数据
-        const result = await editSheetData(data.savedDataUrl, data.rowNum, data.rowData)
-        //3，展示数据
-        res.json(sendResultResponse(true, 200, process.env[EMUN.SYSTEM_SUCCESS]))
+    //1,根据viewId查出view的信息，取出savedDataUrl
+    const view = req.body;
+    const queryView = await View.findByPk(view.id)
+    const app = await getAppEntityByPk(queryView.dataValues)
+    if (await checkAuthorizationMethod(app.dataValues.roleMemberSheet, app.dataValues.googleAccount)){
+        if (view != null){
+            //2，根据view的saveDataURL字段更新google sheet的数据
+            await editSheetDataByRowNum(queryView.dataValues.savedDataUrl, view.rowNum, view.rowData)
+            //3，展示数据
+            res.json(sendResultResponse(true, 200, process.env[EMUN.SYSTEM_SUCCESS]))
+        }else {
+            res.json(sendResultResponse(false, 500, process.env[EMUN.SYSTEM_FAIL]))
+        }
+        //添加日志记录
+        addLog(EMUN.GOOGLE_SHEET, EMUN.VIEW, 'editRecordToGoogleSheet', view.id + '=>' + view.rowNum + '=>' + view.rowData, req.user.googleAccount)
     }else {
-        res.json(sendResultResponse(false, 500, process.env[EMUN.SYSTEM_FAIL]))
+        res.json(sendResultResponse('No Permission', 500, process.env[EMUN.SYSTEM_FAIL]))
     }
+
 };
 
 /**
@@ -747,26 +734,35 @@ exports.editRecordToGoogleSheet = async (req, res) => {
  * @returns google sheet data
  */
 exports.deleteRecordToGoogleSheet = async (req, res) => {
-    //1,根据appid，查出当前APP下所有的view
-    const data = req.body;
-    if (data != null){
-        //2，根据view的saveDataURL字段获取google sheet的数据
-        const result = await deleteSheetData(data.savedDataUrl, data.rowNum)
-        //3，展示数据
-        res.json(sendResultResponse(true, 200, process.env[EMUN.SYSTEM_SUCCESS]))
+    //1,根据viewId查出view的信息，取出savedDataUrl
+    const view = req.body;
+    const queryView = await View.findByPk(view.id)
+    const app = await getAppEntityByPk(queryView.dataValues)
+    if (await checkAuthorizationMethod(app.dataValues.roleMemberSheet, app.dataValues.googleAccount)){
+        if (view != null){
+            //2，根据view的saveDataURL字段删除google sheet的数据
+            await deleteSheetData(queryView.dataValues.savedDataUrl, view.rowNum)
+            //3，展示数据
+            res.json(sendResultResponse(true, 200, process.env[EMUN.SYSTEM_SUCCESS]))
+        }else {
+            res.json(sendResultResponse(false, 500, process.env[EMUN.SYSTEM_FAIL]))
+        }
+        //添加日志记录
+        addLog(EMUN.GOOGLE_SHEET, EMUN.VIEW, 'deleteRecordToGoogleSheet', view.id + '=>' + view.rowNum, req.user.googleAccount)
     }else {
-        res.json(sendResultResponse(false, 500, process.env[EMUN.SYSTEM_FAIL]))
+        res.json(sendResultResponse('No Permission', 500, process.env[EMUN.SYSTEM_FAIL]))
     }
 };
+
 
 // /**
 //  * 根据appId查询所有的view数据
 //  * @param appId
-//  * @returns {Promise<*|null>}
+//  * @returns {Promise<returnData|null>}
 //  */
 // exports.getViewByAppId = async (appId) => {
 //     //根据appId查询所有的view
-//     const viewData = await View.findAll({where: {appId: appId}})
+//     const viewData = await View.findAll({where: {appId: appId,viewType: EMUN.TABLE}})
 //     if (viewData != null) {
 //         let returnData = []
 //         for (const view of viewData){
