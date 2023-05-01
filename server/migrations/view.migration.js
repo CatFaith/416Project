@@ -23,23 +23,38 @@ module.exports = {
       },
       columns: {
         type: Sequelize.INTEGER,
-        comment:''
+        comment:'columns'
       },
       viewType: {
         type: Sequelize.STRING,
-        comment:''
+        comment:'viewType'
       },
       allowedActions: {
         type: Sequelize.STRING,
-        comment:''
+        comment:'allowed Actions'
       },
       roles: {
         type: Sequelize.STRING,
-        comment:''
+        comment:'roles'
       },
       editColumns: {
         type: Sequelize.STRING,
-        comment:''
+        comment:'edit Columns'
+      },
+      filter: {
+        type: Sequelize.STRING,
+        default: 'false',
+        comment:'filter'
+      },
+      userFilter: {
+        type: Sequelize.STRING,
+        default: 'false',
+        comment:'user Filter'
+      },
+      editFilter: {
+        type: Sequelize.STRING,
+        default: 'false',
+        comment:'edit Filter'
       },
       createdAt: {
         allowNull: false,
