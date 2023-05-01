@@ -26,10 +26,24 @@ async function getGoogleSheetAuthorization(url) {
  */
 async function getSheet(url) {
     const arr = url.split('d/')[1];
-    const sheetId = arr.split('=')[1];
+    const sheetId = arr.split('gid=')[1];
     const doc = await getGoogleSheetDoc(url)
     const sheet = doc.sheetsById[sheetId];
     return sheet;
+};
+
+/**
+ * 获取sheet页的名称
+ * @param url
+ * @returns {Promise<*>}
+ */
+async function getSheetTitle(url) {
+    const sheet = await getSheet(url)
+    let title = null
+    if (sheet != null && sheet != undefined){
+        title = sheet._rawProperties.title
+    }
+    return title;
 };
 
 /**
@@ -41,7 +55,9 @@ async function getGoogleSheetsData(urlArr) {
     //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
     const result = [];
     for (const url of urlArr){
+        console.log('url',url)
         const sheet = await getSheet(url);
+        // console.log('sheet',sheet)
         //sheet页名称
         const title = sheet._rawProperties.title;
         //列名称
@@ -205,7 +221,13 @@ async function addSheetData(url, data, googleAccount) {
         if (matchColumn != null){
             map.set(headerValues[i], data[matchColumn])
         }else {
-            map.set(headerValues[i], '""')
+            if (headerValues[i] == 'filter'){
+                map.set(headerValues[i], 'TRUE')
+            }else if (headerValues[i] == 'editable'){
+                map.set(headerValues[i], 'TRUE')
+            }else {
+                map.set(headerValues[i], '(Null)')
+            }
         }
     }
     const inputRowData = Array.from(map).reduce((obj, [key, value]) =>
@@ -320,5 +342,7 @@ module.exports = {
     addSheetData,
     editSheetData,
     deleteSheetData,
-    editSheetDataByRowNum
+    editSheetDataByRowNum,
+    getSheet,
+    getSheetTitle
 };

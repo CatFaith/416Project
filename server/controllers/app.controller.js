@@ -6,7 +6,7 @@ const {addLog} = require("./log.controller")
 const EMUN = require("../utils/emun")
 const {getUserByGoogleAccount} = require("./user.controller");
 const {sendResultResponse} = require("../utils/responseFrom");
-const {getGoogleSheetAuthorization, getGoogleSheetsData} = require("../utils/googleSheet");
+const {getGoogleSheetAuthorization, getGoogleSheetsData, getSheet} = require("../utils/googleSheet");
 
 /**
  * req.user.id is obtained by the calling interface after the token in the request header is resolved.
@@ -24,6 +24,12 @@ exports.createApp = async (req, res) => {
     const app = req.body;
     //前端新增APP传过来的参数，保存APP表
     //userId直接从token中解密获得，前端可不需要传userId
+    //创建app的时候根据用户输入的savedDataUrl同时创建一个view
+    const sheet = await getSheet(app.savedDataUrl)
+    if (sheet == null || sheet == undefined){
+        res.json(sendResultResponse('输入的URL在google sheet中找不到对应的表格，请检查并重新输入', 500, process.env[EMUN.SYSTEM_FAIL]))
+        return
+    }
     const newApp = {
         userId: user.id,
         googleAccount: user.googleAccount,
@@ -34,12 +40,48 @@ exports.createApp = async (req, res) => {
         appName: app.appName
     };
     await App.create(newApp).then(data => {
+        //创建view
+        addViewFromApp(data, sheet, req.user.googleAccount)
         res.json(sendResultResponse(data, 200, process.env[EMUN.SYSTEM_SUCCESS]))
     }).catch(err => {
         //添加日志记录
         addLog(EMUN.ERROR, EMUN.APP, 'createApp', err, req.user.googleAccount)
         res.json(sendResultResponse(err, 500, process.env[EMUN.SYSTEM_FAIL]))
     })
+};
+
+/**
+ * 根据savedDataUrl创建新增view
+ * @param app
+ * @param viewName
+ * @param googleAccount
+ * @returns {Promise<void>}
+ */
+addViewFromApp = async (app, sheet, googleAccount) => {
+    let title = sheet._rawProperties.title
+    let columns = ''
+    const rows = await sheet.getRows();
+    //列名称
+    if (rows != null && rows != undefined){
+        const headerValues = rows[0]._sheet.headerValues;
+        for (let i = 2;i < headerValues.length; i++){
+            columns += headerValues[i] + ','
+        }
+    }
+    //代表是新增view，新增view分为两步
+    const newView = {
+        appId: app.id,
+        viewName: title,
+        savedDataUrl: app.savedDataUrl,
+        viewType: EMUN.TABLE,
+        allowedActions: 'add,edit,delete',
+        roles: EMUN.DEVELOPERS,
+        columns: columns == '' ? '' : columns.substring(0, columns.length - 1),
+        editColumns: columns == '' ? '' : columns.substring(0, columns.length - 1)
+    };
+    await View.create(newView)
+    //添加日志记录
+    addLog(EMUN.GOOGLE_SHEET, EMUN.VIEW, 'addView', 'add sheet', googleAccount)
 };
 
 /**
@@ -113,16 +155,25 @@ exports.getAppAfterLogin = async (req, res) => {
     //1,获取所有的APP，根据roleMemberSheet字段调用google sheet api
     const data = await App.findAll()
     if (data != null){
-        //2,循环app的数据，然后调用google sheet api
-        for (const app of data){
-            //2.1 取出/d后的字符串和gid
-            //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
-            const result = await getGoogleSheetAuthorization(app.roleMemberSheet)
-            //result格式[1@gamil.com,2@gamil.com,3@gamil.com,4@gamil.com]
-            //3,解析返回的数据，判断是否包含当前登录用户的谷歌账号
-            if (result != null){
-                if (result.toString().indexOf(googleAccount) != -1){
-                    returnAppData.push(app)
+        //判读是否是全局开发者
+        const globalDevelopersFlag = await checkGlobalDevelopers(googleAccount)
+        if (globalDevelopersFlag){
+            //如果是全局开发者，那就有权限看到所有的app
+            for (const app of data){
+                returnAppData.push(app.dataValues)
+            }
+        }else {
+            //2,循环app的数据，然后调用google sheet api
+            for (const app of data){
+                //2.1 取出/d后的字符串和gid
+                //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
+                const result = await getGoogleSheetAuthorization(app.dataValues.roleMemberSheet)
+                //result格式[1@gamil.com,2@gamil.com,3@gamil.com,4@gamil.com]
+                //3,解析返回的数据，判断是否包含当前登录用户的谷歌账号
+                if (result != null){
+                    if (result.toString().indexOf(googleAccount) != -1){
+                        returnAppData.push(app.dataValues)
+                    }
                 }
             }
         }
@@ -142,9 +193,11 @@ exports.getAppAfterLogin = async (req, res) => {
 exports.checkAuthorizationMethod = async (roleMemberSheet, googleAccount) => {
     //1，调用google sheet获取数据
     const result = await getGoogleSheetAuthorization(roleMemberSheet)
-    if (result != null){
+    //判读是否是全局开发者
+    const globalDevelopersFlag = await checkGlobalDevelopers(googleAccount)
+    if (result != null || globalDevelopersFlag){
         //2，根据返回的数据，判断是否有权限
-        if (result.toString().indexOf(googleAccount) != -1){
+        if (result.toString().indexOf(googleAccount) != -1 || globalDevelopersFlag){
             return true
         }else {
             return false
@@ -165,9 +218,11 @@ exports.checkAuthorization = async (req, res) => {
     const app = req.body;
     //2，调用google sheet获取数据
     const result = await getGoogleSheetAuthorization(app.roleMemberSheet)
-    if (result != null){
+    //判读是否是全局开发者
+    const globalDevelopersFlag = await checkGlobalDevelopers(googleAccount)
+    if (result != null || globalDevelopersFlag){
         //3，根据返回的数据，判断是否有权限
-        if (result.toString().indexOf(googleAccount) != -1){
+        if (result.toString().indexOf(googleAccount) != -1 || globalDevelopersFlag){
             //判断到有权限以后，调用方法判断googlesheet的列和MySQL的列是否一致
             const message = await checkGoogleColumnWithMySql(app.id, app.googleAccount)
             if (message == null){
@@ -177,6 +232,60 @@ exports.checkAuthorization = async (req, res) => {
             }
         }else {
             res.json(sendResultResponse('No Permission', 500, process.env[EMUN.SYSTEM_FAIL]))
+        }
+    }
+};
+
+/**
+ * 判读当前登录的谷歌账户是否是全局开发者
+ * @param req
+ * @param res
+ * @returns true/false
+ */
+checkGlobalDevelopers = async (googleAccount) => {
+    //判读是否是全局开发者
+    const globalDevelopers = await getGoogleSheetAuthorization(EMUN.GLOBAL_DEVELOPERS_URL)
+    if (globalDevelopers.toString().indexOf(googleAccount) != -1){
+        return true
+    }else {
+        return false
+    }
+}
+
+/**
+ * 判读当前登录的谷歌账户是否是全局开发者或者开发者
+ * @param req
+ * @param res
+ * @returns true/false
+ */
+exports.checkDevelopers = async (req, res) => {
+    const user = req.user;
+    const googleAccount = user.googleAccount;
+    //1，点击app时，根据app的roleMemberSheet，判断当前用户是否有权限打开app
+    const app = req.body;
+    //判读是否是全局开发者
+    const globalDevelopersFlag = await checkGlobalDevelopers(googleAccount)
+    if (globalDevelopersFlag){
+        //2，如果是全局开发者，则直接返回true，代表有权限
+        res.json(sendResultResponse(true, 200, process.env[EMUN.SYSTEM_SUCCESS]))
+    }else {
+        //2，调用google sheet获取数据，获取是不是当前app的开发者
+        const result = await getGoogleSheetAuthorization(app.roleMemberSheet)
+        if (result != null){
+            console.log('resultresult', result)
+            let flag = false
+            for (const item of result){
+                if (item[0] == googleAccount){
+                    flag = true
+                    break
+                }
+            }
+            //3，根据返回的数据，判断是否有权限
+            if (flag){
+                res.json(sendResultResponse(true, 200, process.env[EMUN.SYSTEM_SUCCESS]))
+            }else {
+                res.json(sendResultResponse('No Permission', 500, process.env[EMUN.SYSTEM_FAIL]))
+            }
         }
     }
 };
@@ -216,7 +325,7 @@ checkGoogleColumnWithMySql = async (appId, googleAccount) => {
         //循环遍历
         let message = null
         for (const view of views) {
-            let mysqlColumns = ['id', 'createBy', 'filter', 'editable']
+            let mysqlColumns = ['id', 'createBy']
             if (view.columns != null && view.columns != '') {
                 const viewColumns = view.columns.split(',')
                 for (const column of viewColumns) {

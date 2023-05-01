@@ -10,5 +10,6 @@ router.post("/setPublished",  App.setPublished);
 router.post("/shareApp",  App.shareApp);
 router.post("/getAppAfterLogin",  App.getAppAfterLogin);
 router.post("/checkAuthorization",  App.checkAuthorization);
+router.post("/checkDevelopers",  App.checkDevelopers);
 
 module.exports = router;
