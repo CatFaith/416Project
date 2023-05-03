@@ -1,6 +1,7 @@
 // 全局常量定义
 
 module.exports = Object.freeze(
+
     {
         // Log日志类型常量
         GOOGLE_SHEET: 'googleSheet',
@@ -29,4 +30,4 @@ module.exports = Object.freeze(
         //global developers
         GLOBAL_DEVELOPERS_URL: "https://docs.google.com/spreadsheets/d/18LrH2XWM7-yriRJAveSSId1sOIQ_fS8JnFlSbq5GOlw/edit#gid=0"
     }
-);
+)
