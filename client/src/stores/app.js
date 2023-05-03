@@ -10,9 +10,17 @@ class App {
     apps = []
     app = {}
     authorization = false
+    checkDevelopersRes=[]
     constructor() {
         makeAutoObservable(this)
     }
+
+    // 
+    checkDevelopers = async (req) => {
+        const res = await http.post('/api/app/checkDevelopers', req)
+        this.checkDevelopersRes = res
+    }
+
     // 获取app list
     getApps = async () => {
         const res = await http.post('/api/app/getAppAfterLogin')

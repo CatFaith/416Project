@@ -26,6 +26,11 @@ const AppFrom = React.forwardRef((props, ref) => {
             //状态码为200的时候调用以下方法
             message.success('create success')
             appStore.getApps().then()
+            props.close()
+        }
+        if (appStore.app.code == 500) {
+            //状态码为200的时候调用以下方法
+            message.warning(appStore.app.data)
         }
     }
 //定义模板

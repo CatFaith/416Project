@@ -13,7 +13,8 @@ class View {
     allColumns = []
     viewNameArr = []
     detailData = []
-
+    operateRes=[]
+    filterRes=[]
 
     constructor() {
         makeAutoObservable(this)
@@ -21,7 +22,6 @@ class View {
 
     //获取google的view数据
     getViewForGoogleSheet = async (appId) => {
-        console.log(appId)
         const res = await http.post('/api/view/getViewForGoogleSheet', {appId: appId})
         this.detailData = res.data
         this.detailTabs = this.detailData.map((item) => {
@@ -30,51 +30,26 @@ class View {
                 key: item.id
             }
         })
-        console.log(res)
+    }
+    //获取google的view数据
+    editFilter = async (req) => {
+        const res = await http.post('/api/view/editFilter',req)
+        this.filterRes=res
     }
     //添加一行数据
     addRecordToGoogleSheet = async (req) => {
-        const res = await http.post('/api/view/getViewForGoogleSheet', req)
-        if (res.code == 200) {
-            this.detailData = res.data
-            this.detailTabs = this.detailData.map((item) => {
-                return {
-                    label: item.viewName,
-                    key: item.id
-                }
-            })
-        }
-
-
-        console.log(res)
+        const res = await http.post('/api/view/addRecordToGoogleSheet', req)
+        this.operateRes=res
     }
     //删除一行数据
     deleteRecordToGoogleSheet = async (req) => {
         const res = await http.post('/api/view/deleteRecordToGoogleSheet', req)
-        if (res.code == 200) {
-            this.detailData = res.data
-            this.detailTabs = this.detailData.map((item) => {
-                return {
-                    label: item.viewName,
-                    key: item.id
-                }
-            })
-        }
-        console.log(res)
+        this.operateRes=res
     }
     //修改一行数据
     editRecordToGoogleSheet = async (req) => {
         const res = await http.post('/api/view/editRecordToGoogleSheet', req)
-        if (res.code == 200) {
-            this.detailData = res.data
-            this.detailTabs = this.detailData.map((item) => {
-                return {
-                    label: item.viewName,
-                    key: item.id
-                }
-            })
-        }
-        console.log(res)
+        this.operateRes=res
     }
     // 获取view list
     getViews = async (appId) => {
@@ -83,8 +58,6 @@ class View {
 
         this.viewNameArr = []
         res.data.viewNameArr.map((item) => {
-            console.log(item)
-            console.log(this.viewNameArr)
             this.viewNameArr.push({
                 label: item,
                 value: item

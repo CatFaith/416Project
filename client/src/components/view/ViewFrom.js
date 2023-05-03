@@ -8,9 +8,6 @@ const ViewFrom = React.forwardRef((props, ref) => {
     const {viewStore} = useStore()
     const navigate = useNavigate();
     const appId=useParams().appId
-    console.log(props.viewType)
-
-    console.log(props.viewType=="role")
     let item={}
     //根据传过来的数据定义默认参数
 
@@ -28,8 +25,7 @@ const ViewFrom = React.forwardRef((props, ref) => {
             roleName: props.item.roleName,
         }
     }
-    console.log(props.item)
-
+    console.log("item",props.item)
 
     if(props.viewType=="view"){
         item = props.operationType=="create" ? {
@@ -40,19 +36,24 @@ const ViewFrom = React.forwardRef((props, ref) => {
             id: props.item.id,
             appId: props.item.appId,
             viewName: props.item.viewName,
+            savedDataUrl: props.item.savedDataUrl
         }
     }
 
     async function onFinish(values) {
         //根据是否传入viewId来判断调用edit方法还是create方法
-        console.log(values)
         props.operationType=="create" ? await viewStore.createView(values).then():await viewStore.editView(values).then()
         if (viewStore.view.code == 200) {
             message.success("Operation Success")
             props.viewType=="role"?props.operationType=="create"?viewStore.getRoles(viewStore.view.data.id).then():viewStore.getRoles( props.item.id).then():viewStore.getViews(appId).then()
+            props.viewType=="role"?navigate("/"+appId+"/"+props.viewId+"/roles"):navigate("/"+appId+"/views");
+            props.close()
+            window.location.reload()
         }
-        props.viewType=="role"?navigate("/"+appId+"/"+props.viewId+"/roles"):navigate("/"+appId+"/views");
-
+        if (viewStore.view.code == 500) {
+            message.warning(viewStore.view.data)
+        }
+        // props.viewType=="role"?navigate("/"+appId+"/"+props.viewId+"/roles"):navigate("/"+appId+"/views");
 
     }
 //定义表单模板
@@ -88,17 +89,30 @@ const ViewFrom = React.forwardRef((props, ref) => {
                 >
                     <Input/>
                 </Form.Item>:
-                <Form.Item
-                    label="viewName"
-                    name="viewName"
-                    style={{maxWidth: "100%"}}
-                    //表单校验规则
-                    rules={[{required: true, message: 'Please input your viewName!'}]}
-                >
-                    <Input/>
-                </Form.Item>
+                <div>
+                    <Form.Item
+                        label="viewName"
+                        name="viewName"
+                        style={{maxWidth: "100%"}}
+                        //表单校验规则
+                        rules={[{required: true, message: 'Please input your viewName!'}]}
+                    >
+                        <Input/>
+                    </Form.Item>
+                    {props.operationType=="create"?
+                        <Form.Item
+                            label="savedDataUrl"
+                            name="savedDataUrl"
+                            style={{maxWidth: "100%"}}
+                            //表单校验规则
+                            // rules={[{required: true, message: 'Please input your savedDataUrl!'}]}
+                        >
+                            <Input/>
+                        </Form.Item>:null }
+                </div>
             }
         </Form>
     );
 })
+
 export default observer(ViewFrom)

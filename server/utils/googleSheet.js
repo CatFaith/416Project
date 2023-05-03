@@ -26,10 +26,24 @@ async function getGoogleSheetAuthorization(url) {
  */
 async function getSheet(url) {
     const arr = url.split('d/')[1];
-    const sheetId = arr.split('=')[1];
+    const sheetId = arr.split('gid=')[1];
     const doc = await getGoogleSheetDoc(url)
     const sheet = doc.sheetsById[sheetId];
     return sheet;
+};
+
+/**
+ * 获取sheet页的名称
+ * @param url
+ * @returns {Promise<*>}
+ */
+async function getSheetTitle(url) {
+    const sheet = await getSheet(url)
+    let title = null
+    if (sheet != null && sheet != undefined){
+        title = sheet._rawProperties.title
+    }
+    return title;
 };
 
 /**
@@ -41,7 +55,9 @@ async function getGoogleSheetsData(urlArr) {
     //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
     const result = [];
     for (const url of urlArr){
+        console.log('url',url)
         const sheet = await getSheet(url);
+        // console.log('sheet',sheet)
         //sheet页名称
         const title = sheet._rawProperties.title;
         //列名称
@@ -58,9 +74,10 @@ async function getGoogleSheetsData(urlArr) {
         //列名称
         const headerValues = rows[0]._sheet.headerValues;
         const rowData = []
+        const rowNumData = []
         let i = 0;
         //第一行为name，第二行为initialValue，第三行为label，第四行为reference,第五行是类型。数据时从第六行开始
-        for (row of rows) {
+        for (const row of rows) {
             if (i == 0){
                 initialValue = row._rawData
             }
@@ -75,6 +92,7 @@ async function getGoogleSheetsData(urlArr) {
             }
             //i > 3,代表的是至少是第六行
             if (i > 3){
+                rowNumData.push(row._rowNumber)
                 rowData.push(row._rawData)
             }
             i++
@@ -86,6 +104,7 @@ async function getGoogleSheetsData(urlArr) {
             label: label,
             reference: reference,
             type: type,
+            rowNumData: rowNumData,
             rowData: rowData
         }
         result.push(data)
@@ -169,11 +188,56 @@ async function deleteViewSheet(url) {
  ]
  * @returns {Promise<*>}
  */
-async function addSheetData(url, data) {
+async function addSheetData(url, data, googleAccount) {
     //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
     const sheet = await getSheet(url);
+    // get rows
+    const rows = await sheet.getRows();
+    //列名称
+    const headerValues = rows[0]._sheet.headerValues;
+    let newId = null
+    if (rows.length > 4){
+        //代表已有行数据,取末尾行的Id，再加1就是新数据的Id
+        const rowData = rows[rows.length - 1]._rawData
+        newId = parseInt(rowData[0]) + 1
+    }else {
+        //代表还未有行数据
+        newId = 1
+    }
+    // 添加数据
+    let newRow = {
+        id: newId,
+        createBy: googleAccount
+    }
+    let map = new Map()
+    for (let i = 2;i < headerValues.length;i++){
+        let matchColumn = null
+        for (const item in data) {
+            if (headerValues[i] == item){
+                matchColumn = item
+            }
+        }
+        // 如果匹配列matchColumn不为空，那代表的是当前列有更新
+        if (matchColumn != null){
+            map.set(headerValues[i], data[matchColumn])
+        }else {
+            if (headerValues[i] == 'filter'){
+                map.set(headerValues[i], 'TRUE')
+            }else if (headerValues[i] == 'editable'){
+                map.set(headerValues[i], 'TRUE')
+            }else {
+                map.set(headerValues[i], '(Null)')
+            }
+        }
+    }
+    const inputRowData = Array.from(map).reduce((obj, [key, value]) =>
+            Object.assign(obj, { [key]: value} )
+        , {})
+    newRow = {...newRow,...inputRowData}
+    let addRowData = []
+    addRowData.push(newRow)
     // append rows
-    const rows = await sheet.addRows(data);
+    await sheet.addRows(addRowData);
     return rows;
 };
 
@@ -187,13 +251,14 @@ async function addSheetData(url, data) {
 async function editSheetData(url, rowNum, data) {
     //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
     const sheet = await getSheet(url);
+    //先更新标题行
     await sheet.setHeaderRow(data[0])
     // get rows
     const rows = await sheet.getRows();
     let rowOne = rows[0]._rawData
     if (rowOne.length != data[0].length){
         //长度不相等，代表新增了列
-        rowOne.push("")
+        rowOne.push('""')
         await rows[0].save();
     }
     // edit rows
@@ -204,6 +269,51 @@ async function editSheetData(url, rowNum, data) {
     }
     return rows;
 };
+
+
+/**
+ * 编辑row及保存
+ * @param url
+ * @param rowNum  修改的行号
+ * @param data    修改后整行data的数据，格式为：{ "TEST2222": "Eric666", "test333": "1888" }
+ * @returns {Promise<*>}
+ */
+async function editSheetDataByRowNum(url, rowNum, data) {
+    //roleMemberSheet样例：https://docs.google.com/spreadsheets/d/1wadtiEG_BWMmbH9rl4DaVc0_RelTgzYuK20QKIXgQdo/edit#gid=385025179
+    const sheet = await getSheet(url);
+    // get rows
+    const rows = await sheet.getRows();
+    // 减2才是真实的行数据
+    const updateRow = rows[rowNum - 2]._rawData
+    //列名称
+    const headerValues = rows[0]._sheet.headerValues;
+    let rowData = []
+    for (let i = 0;i < 2;i++){
+        //前4列固定的值不会被修改
+        rowData.push(updateRow[i])
+    }
+    // 匹配列头中需要更新的列
+    for (let i = 2;i < headerValues.length;i++){
+        let matchColumn = null
+        for (const item in data) {
+            if (headerValues[i] == item){
+                matchColumn = item
+            }
+        }
+        // 如果匹配列matchColumn不为空，那代表的是当前列有更新
+        if (matchColumn != null){
+            rowData.push(data[matchColumn])
+        }else {
+            rowData.push(updateRow[i])
+        }
+    }
+    rows[rowNum - 2]._rawData = rowData
+    // save updates
+    await rows[rowNum - 2].save();
+    return rows;
+};
+
+
 
 /**
  *
@@ -217,7 +327,7 @@ async function deleteSheetData(url, rowNum) {
     // get rows
     const rows = await sheet.getRows();
     // save updates
-    await rows[rowNum].delete();
+    await rows[rowNum - 2].delete();
     return rows;
 };
 
@@ -231,5 +341,8 @@ module.exports = {
     deleteViewSheet,
     addSheetData,
     editSheetData,
-    deleteSheetData
+    deleteSheetData,
+    editSheetDataByRowNum,
+    getSheet,
+    getSheetTitle
 };

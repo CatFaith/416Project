@@ -17,7 +17,8 @@ interface Option {
 
 
 const View = () => {
-    const navigate = useNavigate();
+    const navigate = useNavigate()
+    const state = useLocation()
     //定义state数据
     const {viewStore} = useStore()
 
@@ -30,8 +31,6 @@ const View = () => {
     // const [nameList, setNameList] = useState([["columns0","name0","type0","label0"],["columns1","name1","type1","label1"]])
     let [columnsList, setColumnsList] = useState({})
     const [nameList, setNameList] = useState([])
-    // const [children, setChildren] = useState([])
-
     useEffect(() => {
         viewStore.getViews(appId).then(()=>{
             setViewId(JSON.parse(JSON.stringify(viewStore.views[0])).id)
@@ -73,13 +72,7 @@ const View = () => {
                 setColumnsList(item.columnsList)
             }
         })
-        console.log(viewMenusId)
     }
-    // window.addEventListener("popstate", function(e) {
-    //     navigate("/")
-    // }, false);
-
-
 
     const addColumn=()=>{
         let nameItem=["columns"+nameList.length,"name"+nameList.length,"type"+nameList.length,"label"+nameList.length]
@@ -90,14 +83,17 @@ const View = () => {
     async function onFinish(values){
         values.id=viewId
         viewStore.editOrAddViewColumn(values).then()
-        console.log(values)
         message.success('Edit Success')
 
     };
 
     const onReset = () => {
-        form.resetFields();
-        setNameList([["columns0","name0","type0","label0"],["columns1","name1","type1","label1"]])
+        // form.resetFields();
+        viewStore.getViews(appId).then(()=>{
+            setNameList(JSON.parse(JSON.stringify(viewStore.views[0])).nameList)
+            setColumnsList(JSON.parse(JSON.stringify(viewStore.views[0])).columnsList)
+            form.setFieldsValue(columnsList)
+        })
     };
     const goRole=()=>{
         navigate("/"+appId+"/"+viewId+"/roles");

@@ -8,7 +8,7 @@ const ViewDialog = (props) => {
     const ref = React.createRef();
     const onSave = () => {
         ref.current.submit()
-        props.close()
+        // props.close()
     }
 //定义弹出框模板
     return (

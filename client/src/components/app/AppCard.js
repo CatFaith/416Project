@@ -5,6 +5,7 @@ import {useNavigate} from 'react-router-dom'
 import React, {useState} from "react";
 import {useStore} from '@/stores'
 import AppDialog from "@/components/app/AppDialog";
+
 const {Meta} = Card;
 //props:父组件传过来的参数
 const AddCard = (props) => {
@@ -24,24 +25,58 @@ const AddCard = (props) => {
     //通过useNavigate实现页面跳转
     const navigate = useNavigate();
 
-    const isHasPermission=(url)=>{
-        appStore.checkAuthorization(props.item).then(()=>{
-            if (appStore.authorization.code==200){
+    const isHasPermission = (url) => {
+        appStore.checkAuthorization(props.item).then(() => {
+            if (appStore.authorization.code == 200) {
                 navigate(url);
             }
-            if(appStore.authorization.code==500){
+            if (appStore.authorization.code == 500) {
                 message.warning(appStore.authorization.data)
             }
         })
     }
     const goViews = () => {
-        isHasPermission("/"+props.item.id+"/views")
         //页面跳转到views
+        appStore.checkDevelopers(props.item).then(() => {
+            if (appStore.checkDevelopersRes.code == 500) {
+                message.warning(appStore.checkDevelopersRes.data)
+            }
+            if (appStore.checkDevelopersRes.code == 200) {
+                isHasPermission("/" + props.item.id + "/views")
+            }
+        })
     }
     const goAppDetail = () => {
         //页面跳转到appDetail
-        isHasPermission("/"+props.item.id+"/detail")
+        isHasPermission("/" + props.item.id + "/detail")
+          
     }
+    const editApp = () => {
+        appStore.checkDevelopers(props.item).then(() => {
+            if (appStore.checkDevelopersRes.code == 500) {
+                message.warning(appStore.checkDevelopersRes.data)
+            }
+            if (appStore.checkDevelopersRes.code == 200) {
+                setOperationType("edit");
+                setShowAppDialog(true);
+                setShowPopover(false)
+            }
+        })
+
+    }
+    const deleteApp = () => {
+        appStore.checkDevelopers(props.item).then(() => {
+            if (appStore.checkDevelopersRes.code == 500) {
+                message.warning(appStore.checkDevelopersRes.data)
+            }
+            if (appStore.checkDevelopersRes.code == 200) {
+                setShowCheckBox(true)
+                setShowPopover(false)
+            }
+        })
+
+    }
+
 
     const onDelete = async (id) => {
         //await 等待await方法执行后再继续执行下一个方法
@@ -49,7 +84,7 @@ const AddCard = (props) => {
         if (appStore.app.code == 200) {
             //返回状态码为200调用message组件提示
             message.success('Delete Success')
-            appStore.getApps().then(()=>{
+            appStore.getApps().then(() => {
                 }
             )
         }
@@ -68,11 +103,12 @@ const AddCard = (props) => {
             actions={[
                 <Button type="text" block
                         onClick={goViews}
-                        disabled={(userStore.id==props.item.userId || props.item.developer.indexOf("," + userStore.id + ",") != -1)?false:true }>
-                    <SettingOutlined key="setting"/>
+                    // disabled={(userStore.id==props.item.userId || props.item.developer.indexOf("," + userStore.id + ",") != -1)?false:true }
+                >
+                    <SettingOutlined key="setting"/>view
                 </Button>,
                 <Button type="text" block onClick={goAppDetail}>
-                    <EditOutlined key="edit" />
+                    <EditOutlined key="edit"/>table
                 </Button>,
                 <Popover
                     visible={showPopover}
@@ -82,11 +118,13 @@ const AddCard = (props) => {
                         <div>
                             <div>
                                 {/*//设置表单类型，打开表单，关闭弹出框*/}
-                                <Button type="text" size="middle" onClick={() => {
-                                    setOperationType("edit");
-                                    setShowAppDialog(true);
-                                    setShowPopover(false)
-                                }}><EditOutlined/>Edit</Button>
+                                <Button type="text" size="middle" onClick={editApp
+                                    //     () => {
+                                    //     setOperationType("edit");
+                                    //     setShowAppDialog(true);
+                                    //     setShowPopover(false)
+                                    // }
+                                }><EditOutlined/>Edit</Button>
                             </div>
                             <div>
                                 <Button type="text" size="middle" onClick={() => {
@@ -98,10 +136,12 @@ const AddCard = (props) => {
                             <div>
                                 {/*//调用onDelete方法*/}
                                 <Button type="text" size="middle"
-                                        onClick={() => {
-                                            setShowCheckBox(true)
-                                            setShowPopover(false)
-                                        }}><DeleteOutlined/>Delete</Button>
+                                        onClick={deleteApp
+                                            //     () => {
+                                            //     setShowCheckBox(true)
+                                            //     setShowPopover(false)
+                                            // }
+                                        }><DeleteOutlined/>Delete</Button>
                             </div>
 
                         </div>}>
@@ -109,7 +149,8 @@ const AddCard = (props) => {
                     <Button type="text"
                             block
                             onClick={() => showPopover ? setShowPopover(false) : setShowPopover(true)}
-                            disabled={(userStore.id==props.item.userId || props.item.developer.indexOf("," + userStore.id + ",") != -1)?false:true }>
+                        // disabled={(userStore.id==props.item.userId || props.item.developer.indexOf("," + userStore.id + ",") != -1)?false:true }
+                    >
                         <EllipsisOutlined key="ellipsis"/>
                     </Button>
                 </Popover>
@@ -140,8 +181,6 @@ const AddCard = (props) => {
         </Card>
     );
 }
-
-
 
 
 export default AddCard

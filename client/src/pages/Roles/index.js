@@ -64,8 +64,6 @@ const Roles = () => {
             //状态码为200的时候调用以下方法
             message.success('Edit success')
         }
-        // await viewStore.getRoles(viewId).then()
-
     };
 
     const onReset = () => {

@@ -15,5 +15,6 @@ router.post("/deleteRecordToGoogleSheet",  View.deleteRecordToGoogleSheet);
 router.post("/getViewColumnsByAppId",  View.getViewColumnsByAppId);
 router.post("/getRoleDataByViewId",  View.getRoleDataByViewId);
 router.post("/editOrAddViewColumn",  View.editOrAddViewColumn);
+router.post("/editFilter",  View.editFilter);
 
 module.exports = router;

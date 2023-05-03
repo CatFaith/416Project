@@ -56,12 +56,12 @@ const Apps = () => {
                     <Row>
                         {/*//当app list有数据的时候遍历生成AddCard组件*/}
                         {appStore.apps? appStore.apps.map(item => {
-                            if (showAppType == "recent" && item.userId == userStore.id) {
+                            {/* if (showAppType == "recent" && item.userId == userStore.id) { */}
                                 return <Col span={6} style={{marginBottom: 30}}><AddCard item={item}></AddCard> </Col>
-                            }
+                            {/* }
                             if (showAppType == "share" && item.userId != userStore.id) {
                                 return <Col span={6} style={{marginBottom: 30}}><AddCard item={item}></AddCard> </Col>
-                            }
+                            } */}
                         }) : null}
                     </Row>
                 </Content>

@@ -21,7 +21,10 @@ module.exports = (sequelize, DataTypes) => {
     viewType: DataTypes.STRING,
     allowedActions: DataTypes.STRING,
     roles: DataTypes.STRING,
-    editColumns: DataTypes.STRING
+    editColumns: DataTypes.STRING,
+    filter: DataTypes.STRING,
+    userFilter: DataTypes.STRING,
+    editFilter: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'View',

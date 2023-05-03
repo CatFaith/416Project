@@ -15,12 +15,17 @@
 
   .login-container {
     width: 440px;
-    height: 400px;
+    height: 300px;
     position: absolute;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: center;
+    .google_logo{
+      margin: 57px 0;
+    }
   }
 
   .login-checkbox-label {

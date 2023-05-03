@@ -15,6 +15,7 @@
     "express-jwt": "^6.1.1",
     "express-session": "^1.17.3",
     "google-spreadsheet": "^3.3.0",
+    "googleapis": "^105.0.0",
     "http-errors": "~1.6.3",
     "jade": "~1.11.0",
     "jsonwebtoken": "^9.0.0",

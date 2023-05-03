@@ -4,59 +4,57 @@ import {useNavigate} from 'react-router-dom'
 import './index.scss'
 import { useStore } from '@/stores'
 
+import React, {useEffect,useState} from "react";
+import {GoogleLogin} from 'react-google-login';
+import { gapi } from 'gapi-script';
 
 function Login() {
     const { userStore } = useStore()
     const navigate = useNavigate()
-    //实现save方法
-    async function onFinish(values) {
-        await userStore.login(values)
-        // 跳转首页
+    const clientId = '1043175129211-cuk2sn4jkrcspjhh278ia6jmrkp0m581.apps.googleusercontent.com';
+    useEffect(() => {
+        const initClient = () => {
+            gapi.client.init({
+                clientId: clientId,
+                scope: ''
+            });
+        };
+        gapi.load('client:auth2', initClient);
+    });
+
+    const onSuccess = async (res) => {
+        await userStore.login({
+            "userName": res.profileObj.name,
+            "googleAccount": res.profileObj.email,
+            "googleToken": res.tokenObj.access_token
+        })
         navigate('/', {replace: true})
         message.success('登录成功')
-    }
+    };
+    const onFailure = (err) => {
+        message.warning('登录失败')
+        window.location.reload()
+    };
+
     return (
         <div className="login">
             <Card className="login-container">
                 <img className="login-logo" src={logo} alt=""/>
-                <Form
-                    //定义表单默认数据
-                    initialValues={{
-                        remember: true,
-                        googleAccount: 'Eric@gmail.com',
-                        userName:'Eric',
-                        googleToken:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlck5hbWUiOiJFcmljIiwiZ29vZ2xlQWNjb3VudCI6IkVyaWNAZ21haWwuY29tIiwiaWF0IjoxNjgwMDY1MTY2LCJleHAiOjE2ODAzMjQzNjZ9.aKHeH1IoQYpAFOQuagkRLIhqAhEStPX0DTTJz7Tb7iQ',
-                    }}
-                    //定义确定键方法
-                    onFinish={onFinish}
-                    layout="vertical"
-                >
-                    <Form.Item
-                        label="userName"
-                        name="userName"
-                    >
-                        <Input size="large" placeholder="name"/>
-                    </Form.Item>
-                    <Form.Item
-                        label="googleAccount"
-                        name="googleAccount">
-                        <Input size="large" placeholder="googleAccount"/>
-                    </Form.Item>
-                    <Form.Item
-                        hidden
-                        label="googleToken"
-                        name="googleToken">
-                        <Input size="large" placeholder="googleToken"/>
-                    </Form.Item>
-                    <Form.Item>
-                        <Button type="primary" htmlType="submit" size="large" block>
-                            登录
-                        </Button>
-                    </Form.Item>
-                </Form>
+                <div  className="google_logo" >
+                    <GoogleLogin
+                        clientId={clientId}
+                        buttonText="Sign in with Google"
+                        onSuccess={onSuccess}
+                        onFailure={onFailure}
+                        // cookiePolicy={'single_host_origin'}
+                        isSignedIn={false}
+                    />
+                </div>
+
             </Card>
         </div>
     );
 }
+
 
 export default Login;

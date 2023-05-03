@@ -10,7 +10,7 @@ const AppDialog = (props) => {
         //调用子组件的提交方法
         ref.current.submit()
         //调用父组件的关闭弹窗方法
-        props.close()
+        // props.close()
     }
     //根据父组件传过来的数据设定title值
     const title= props.operationType=="create"?"Add App":props.operationType=="edit"?"Edit App":"Share App"
@@ -27,7 +27,7 @@ const AppDialog = (props) => {
             onCancel={() => props.close()}
             destroyOnClose>
             {/*//根据父组件传过来的数据设定调用的子组件*/}
-            {props.operationType=="share"?<ShareAppFrom ref={ref} item={props.item}></ShareAppFrom>:<AppFrom ref={ref} item={props.item}></AppFrom>}
+            {props.operationType=="share"?<ShareAppFrom ref={ref} item={props.item} close={props.close}></ShareAppFrom>:<AppFrom ref={ref} item={props.item} close={props.close}></AppFrom>}
         </Modal>
     );
 }

@@ -38,15 +38,25 @@
   .user-operate {
     display: inline-block;
     cursor: pointer;
-
   }
+
+}
+
+.gmail_title{
+  font-size: 16px;
+  padding-left: 8px;
+  font-weight: 600;
+  margin-bottom: 10px;
 }
 .user-setting,.user-help   {
   border-bottom: solid #ececec 1px;
-  padding-bottom: 4px;
+  padding-bottom: 10px;
+  padding-top: 4px;
 }
 
 
 .ant-layout-header {
   padding: 0 !important;
 }
+
+
