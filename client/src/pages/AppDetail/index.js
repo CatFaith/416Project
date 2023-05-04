@@ -32,6 +32,9 @@ const AppDetail = () => {
     const [form] = Form.useForm();
     const [filterForm] = Form.useForm();
     let referenceList = []
+    let [inputType, setInputType] = useState()
+    let [defaultValue, setDefaultValue] = useState()
+    let [urlTypeList, setUrlTypeList] = useState()
     let [reference, setReference] = useState([])
     let [allowedAction, setAllowedAction] = useState([])
     let [nameList, setNameList] = useState([])
@@ -70,7 +73,9 @@ const AppDetail = () => {
                 item.reference.map((item, index) => {
                     referenceList.push(item[0])
                 })
+                //todo 离线开发
                 role=item.role
+                // role="developers"
                 setRole(role)
                 filter=item.filter
                 setFilter(filter)
@@ -79,6 +84,12 @@ const AppDetail = () => {
                 editFilter=item.editFilter
                 setEditFilter(editFilter)
                 filterForm.setFieldsValue({editFilter: editFilter,filter: filter,userFilter: userFilter})
+                inputType=item.editableColumnsType
+                setInputType(inputType)
+                defaultValue=item.editableColumnsInitialValue
+                setDefaultValue(defaultValue)
+                urlTypeList=item.urlType
+                setUrlTypeList(defaultValue)
                 //reference数据
                 reference = item.reference
                 setReference(reference)
@@ -104,6 +115,13 @@ const AppDetail = () => {
                                         dataIndex: item,
                                         key: item,
                                         render: (text: string) => <a onClick={() => showRefData(item, text)}>{text}</a>
+                                    })
+                                } else if(urlTypeList.indexOf(item) != -1){
+                                    columns.push({
+                                        title: item,
+                                        dataIndex: item,
+                                        key: item,
+                                        render: (text: string) => <a href={text} target="_blank" rel="noopener noreferrer">{text}</a>
                                     })
                                 } else {
                                     columns.push({title: item, dataIndex: item, key: item})
@@ -332,7 +350,23 @@ const AppDetail = () => {
     const onAddRecord = (value) => {
         setFromNames(editNameList)
         setFromType("Add")
-        form.resetFields();
+        let initData = {}
+        let editNameL = editNameList.length
+        editNameList.map((item, index) => {
+            if (index == 0) {
+                initData = '{'
+            }
+            let value=defaultValue[index]=="(Null)"?"":defaultValue[index]
+            initData = initData + '"' + item + '":' + '"' + value + '"'
+            if (index < (editNameL - 1)) {
+                initData = initData + ','
+            }
+            if (index == (editNameL - 1)) {
+                initData = initData + '}'
+            }
+        })
+        // form.resetFields();
+        form.setFieldsValue({...JSON.parse(initData)})
         setAddRecord(true)
     }
 
@@ -413,15 +447,15 @@ const AppDetail = () => {
                         style={{height: '100%', background: "#f5f5f5",}}
                         defaultSelectedKeys="all"
                     >
-                        {/*<div>*/}
-                        {/*    <Button type="text" icon={<DoubleLeftOutlined/>} size="large" onClick={() => navigate("/")}*/}
-                        {/*            style={{marginLeft: "15px", marginTop: "50px"}}></Button>*/}
-                        {/*    <Button type="text" icon={<SaveOutlined/>} size="large"*/}
-                        {/*            style={{marginLeft: "15px", marginTop: "10px"}}></Button>*/}
-                        {/*    <Button type="text" icon={<DoubleRightOutlined/>} size="large"*/}
-                        {/*            style={{marginLeft: "15px", marginTop: "10px"}}></Button>*/}
+                        <div>
+                            <Button type="text" icon={<DoubleLeftOutlined/>} size="large" onClick={() => navigate(-1)}
+                                    style={{}}>Back</Button>
+                            {/*<Button type="text" icon={<SaveOutlined/>} size="large"*/}
+                            {/*        style={{marginLeft: "15px", marginTop: "10px"}}></Button>*/}
+                            {/*<Button type="text" icon={<DoubleRightOutlined/>} size="large"*/}
+                            {/*        style={{marginLeft: "15px", marginTop: "10px"}}></Button>*/}
 
-                        {/*</div>*/}
+                        </div>
 
                         <Button type="dashed"
                                 onClick={onAddRecord}
@@ -430,7 +464,7 @@ const AppDetail = () => {
                             // 根据allowedAction的值判断该用户是否有权限添加行数据
                                 disabled={allowedAction.indexOf("add") == -1}
                                 size="large"
-                                style={{marginLeft: 20, marginTop: 35, marginBottom: 15}}>
+                                style={{marginLeft: 20, marginTop: 5, marginBottom: 15}}>
                             Add record
                         </Button>
 
@@ -440,12 +474,12 @@ const AppDetail = () => {
                         <Menu.Item key="all" onClick={changeRecordDate}>
                             <BankOutlined style={{marginRight: "10px"}}/>All
                         </Menu.Item>
-                        <Menu.Item key="userFilter" onClick={changeRecordDate} hidden={role != "developers"}>
-                            <UserOutlined style={{marginRight: "10px"}}/>User filter
-                        </Menu.Item>
-                        <Menu.Item key="filter" onClick={changeRecordDate} hidden={role != "developers"}>
-                            <ProfileOutlined style={{marginRight: "10px"}}/>Filter
-                        </Menu.Item>
+                        {/*<Menu.Item key="userFilter" onClick={changeRecordDate} hidden={role != "developers"}>*/}
+                        {/*    <UserOutlined style={{marginRight: "10px"}}/>User filter*/}
+                        {/*</Menu.Item>*/}
+                        {/*<Menu.Item key="filter" onClick={changeRecordDate} hidden={role != "developers"}>*/}
+                        {/*    <ProfileOutlined style={{marginRight: "10px"}}/>Filter*/}
+                        {/*</Menu.Item>*/}
                     </Menu>
                 </Sider>
                 <Content style={{marginTop: 30, marginLeft: 20, marginRight: 30}}>
@@ -491,10 +525,18 @@ const AppDetail = () => {
                                 // 当item为key时隐藏该列数据
                                 hidden={item == "key"}
                                 style={{maxWidth: "100%"}}
-                                rules={[{required: true, message: 'Please input your ' + item + '!'}]}>
+                                // rules={[{required: true, message: 'Please input your ' + item + '!'}]}
+                                rules={inputType[index]=="url"?[
+                                    {required: true,type: 'url', message: 'Please input your ' + item + '! Type is url.'}]:
+                                    inputType[index]=="number"?
+                                        [{required: true, type: 'number', transform(value) {if(value){return Number(value)}},message: 'Please input your ' + item + '! Type is number.'}]:
+                                        [{required: true, message: 'Please input your ' + item + '! Type is text.'}]
+                                }
+                            >
                                 {
                                     // filter和editable用下拉选择框展示，其余用input
-                                    item != "filter" && item != "editable" ?
+                                    // item != "filter" && item != "editable" ?
+                                    inputType[index]!="boolean" ?
                                         <Input placeholder={"Please input your " + item}/> :
                                         <Select placeholder={"Please select your" + item}
                                                 options={[

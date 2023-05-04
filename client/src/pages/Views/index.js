@@ -81,10 +81,15 @@ const View = () => {
     }
     const [form] = Form.useForm();
     async function onFinish(values){
-        values.id=viewId
-        viewStore.editOrAddViewColumn(values).then()
-        message.success('Edit Success')
-
+        const valueStr=JSON.stringify(values)
+        const list = valueStr.match(/TRUE/g)
+        if (list.length>1){
+            message.error("提交失败,Label只能有一个值为true")
+        }else {
+            values.id=viewId
+            viewStore.editOrAddViewColumn(values).then()
+            message.success('Edit Success')
+        }
     };
 
     const onReset = () => {
@@ -97,6 +102,16 @@ const View = () => {
     };
     const goRole=()=>{
         navigate("/"+appId+"/"+viewId+"/roles");
+    }
+    const onChange=()=>{
+        form.validateFields().then(async (values) => {
+            console.log(values)
+            const valueStr=JSON.stringify(values)
+            const list = valueStr.match(/TRUE/g)
+            if (list.length>1){
+                message.warning("Label只能有一个值为true")
+            }
+        })
     }
     form.setFieldsValue(columnsList)
     return (
@@ -136,12 +151,13 @@ const View = () => {
                                         name={item[0]}
                                         style={{maxWidth: "90%"}}
                                     >
-                                        <Select>
-                                            <Option value="a">A</Option>
-                                            <Option value="b">B</Option>
-                                            <Option value="c">C</Option>
-                                            <Option value="d">D</Option>
-                                        </Select>
+                                        {/*<Select>*/}
+                                        {/*    <Option value="a">A</Option>*/}
+                                        {/*    <Option value="b">B</Option>*/}
+                                        {/*    <Option value="c">C</Option>*/}
+                                        {/*    <Option value="d">D</Option>*/}
+                                        {/*</Select>*/}
+                                        <Input  disabled/>
                                     </Form.Item>
                                 </Col>
                                 <Col span={6} >
@@ -168,7 +184,7 @@ const View = () => {
                                         name={item[3]}
                                         style={{maxWidth: "90%"}}
                                     >
-                                        <Select >
+                                        <Select onChange={onChange}>
                                             <Option value="TRUE">TRUE</Option>
                                             <Option value="FALSE">FALSE</Option>
                                         </Select>

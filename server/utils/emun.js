@@ -1,7 +1,6 @@
 // 全局常量定义
 
 module.exports = Object.freeze(
-
     {
         // Log日志类型常量
         GOOGLE_SHEET: 'googleSheet',
@@ -23,11 +22,11 @@ module.exports = Object.freeze(
         DETAIL: 'detail',
         //新增Sheet页后默认列赋值
         NEW_SHEET_COLUMN: ['id', 'createBy', 'filter', 'editable'],
-        NEW_SHEET_INIT: [ { id: '""', createBy: '""', filter: '""', editable: '""' } ],
+        NEW_SHEET_INIT: [ { id: '(Null)', createBy: '(Null)', filter: '(Null)', editable: '(Null)' } ],
         NEW_SHEET_LABEL: [ { id: 'FALSE', createBy: 'FALSE', filter: 'FALSE', editable: 'FALSE' } ],
         NEW_SHEET_REF: [ { id: 'FALSE', createBy: 'FALSE', filter: 'FALSE', editable: 'FALSE' } ],
         NEW_SHEET_TYPE: [ { id: 'text', createBy: 'text', filter: 'boolean', editable: 'boolean' } ],
         //global developers
         GLOBAL_DEVELOPERS_URL: "https://docs.google.com/spreadsheets/d/18LrH2XWM7-yriRJAveSSId1sOIQ_fS8JnFlSbq5GOlw/edit#gid=0"
     }
-)
+);

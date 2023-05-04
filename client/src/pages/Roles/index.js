@@ -1,9 +1,16 @@
 import {observer} from 'mobx-react-lite'
 import {Button, Checkbox, Col, Form, Input, Layout, Menu, message, Modal, Popover, Row, Select} from "antd";
 import React, {useEffect, useState} from "react";
-import {DeleteOutlined, EditOutlined, FileTextOutlined, MoreOutlined, PlusOutlined} from "@ant-design/icons";
+import {
+    DeleteOutlined,
+    DoubleLeftOutlined,
+    EditOutlined,
+    FileTextOutlined,
+    MoreOutlined,
+    PlusOutlined
+} from "@ant-design/icons";
 import {useStore} from "@/stores";
-import {useParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 import ViewDialog from "@/components/view/ViewDialog";
 
 import type {SelectProps} from 'antd';
@@ -14,6 +21,7 @@ const {Option} = Select;
 
 
 const Roles = () => {
+    const navigate = useNavigate()
     //get view list
     const {viewStore} = useStore()
     const appId = useParams().appId
@@ -114,7 +122,6 @@ const Roles = () => {
     form.setFieldsValue(roleItem)
     return (
         <div className="ViewDetail" style={{height: '100%'}}>
-
             <Layout>
                 <Sider style={{background: "#f5f5f5", height: '100%'}}>
                     <Menu
@@ -122,6 +129,9 @@ const Roles = () => {
                         style={{height: '100%', background: "#f5f5f5"}}
                         selectedKeys={[selectedKeys]}
                     >
+                        <div>
+                            <Button type="text" icon={<DoubleLeftOutlined/>} size="large" onClick={() => navigate(-1)}>Back</Button>
+                        </div>
                         <Menu.Item disabled="true" style={{fontSize: "larger"}}>
                             Role Edit
                         </Menu.Item>
@@ -192,13 +202,14 @@ const Roles = () => {
 
                     </Menu>
                 </Sider>
-                <Content style={{margin: "3% 10%"}}>
+                <Content style={{margin: "3% 10%"}} >
                     <Form
                         name="basic"
                         form={form}
                         onFinish={onFinish}
                         autoComplete="off"
                         layout="vertical"
+                        hidden={viewStore.roles.length==0}
                     >
                         <Form.Item
                             //隐藏这个输入框

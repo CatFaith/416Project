@@ -23,7 +23,9 @@ class App {
 
     // 获取app list
     getApps = async () => {
+        //todo 离线开发
         const res = await http.post('/api/app/getAppAfterLogin')
+        // const res = await http.post('/api/app/getApp')
         this.apps = res.data
     }
     // 创建app

@@ -1,5 +1,12 @@
 import {Button, Col, Menu, message, Modal, Popover, Row} from "antd";
-import {DeleteOutlined, EditOutlined, FileTextOutlined, MoreOutlined, PlusOutlined} from "@ant-design/icons";
+import {
+    DeleteOutlined,
+    DoubleLeftOutlined,
+    EditOutlined,
+    FileTextOutlined,
+    MoreOutlined,
+    PlusOutlined
+} from "@ant-design/icons";
 import React, {useEffect, useState} from "react";
 import ViewDialog from "@/components/view/ViewDialog";
 import {useStore} from "@/stores";
@@ -46,6 +53,10 @@ const ViewMenus = (props) => {
             style={{height: '100%', background: "#f5f5f5"}}
             selectedKeys={[selectedKeys]}
         >
+            <div>
+                <Button type="text" icon={<DoubleLeftOutlined/>} size="large" onClick={() => navigate(-1)}
+                        style={{}}>Back</Button>
+            </div>
             <Menu.Item disabled="true" style={{fontSize: "larger"}}>
                 App Edit
             </Menu.Item>

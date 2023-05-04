@@ -37,6 +37,7 @@ const AddCard = (props) => {
     }
     const goViews = () => {
         //页面跳转到views
+        //todo 离线开发
         appStore.checkDevelopers(props.item).then(() => {
             if (appStore.checkDevelopersRes.code == 500) {
                 message.warning(appStore.checkDevelopersRes.data)

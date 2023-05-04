@@ -257,15 +257,25 @@ async function editSheetData(url, rowNum, data) {
     const rows = await sheet.getRows();
     let rowOne = rows[0]._rawData
     if (rowOne.length != data[0].length){
-        //长度不相等，代表新增了列
-        rowOne.push('""')
+        //长度不相等，代表新增了列，赋予新列默认值
+        rowOne.push('(Null)')
         await rows[0].save();
     }
     // edit rows
     for (const num of rowNum){
-        rows[num]._rawData = data[num];
+        rows[num]._rawData = data[num]
         // save updates
-        await rows[num].save();
+        await rows[num].save()
+    }
+    // 接下来是更新当前sheet页真实的数据，因为新加了一列，需要给新加的列赋予默认值：(Null)
+    if (rows.length > 4){
+        for (let i = 4; i < rows.length ;i++){
+            let rowData = rows[i]._rawData
+            rowData.push('(Null)')
+            rows[i]._rawData = rowData
+            // save updates
+            await rows[i].save()
+        }
     }
     return rows;
 };
