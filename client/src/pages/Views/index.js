@@ -82,9 +82,11 @@ const View = () => {
     const [form] = Form.useForm();
     async function onFinish(values){
         const valueStr=JSON.stringify(values)
+        console.log(valueStr)
         const list = valueStr.match(/TRUE/g)
-        if (list.length>1){
-            message.error("提交失败,Label只能有一个值为true")
+        console.log(list)
+        if (list==null?false:list.length>1){
+            message.error("Error,only one Label can be true")
         }else {
             values.id=viewId
             viewStore.editOrAddViewColumn(values).then()
@@ -109,7 +111,7 @@ const View = () => {
             const valueStr=JSON.stringify(values)
             const list = valueStr.match(/TRUE/g)
             if (list.length>1){
-                message.warning("Label只能有一个值为true")
+                message.warning("Only one Label can be true")
             }
         })
     }

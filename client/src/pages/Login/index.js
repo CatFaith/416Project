@@ -29,10 +29,10 @@ function Login() {
             "googleToken": res.tokenObj.access_token
         })
         navigate('/', {replace: true})
-        message.success('登录成功')
+        message.success('login success')
     };
     const onFailure = (err) => {
-        message.warning('登录失败')
+        message.warning('login failed')
         window.location.reload()
     };
 
